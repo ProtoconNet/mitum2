@@ -73,7 +73,7 @@ func proposalMakderGetOperationsFunc(pctx context.Context) (
 		return nil, err
 	}
 
-	operationfilterf := IsSupportedProposalOperationFactHintFunc()
+	// operationfilterf := IsSupportedProposalOperationFactHintFunc()
 
 	return func(ctx context.Context, height base.Height) ([]util.Hash, error) {
 		policy := db.LastNetworkPolicy()
@@ -92,9 +92,9 @@ func proposalMakderGetOperationsFunc(pctx context.Context) (
 			n,
 			func(meta isaac.PoolOperationRecordMeta) (bool, error) {
 				// NOTE filter genesis operations
-				if !operationfilterf(meta.Hint()) {
-					return false, nil
-				}
+				// if !operationfilterf(meta.Hint()) {
+				// 	return false, errors.Errorf("Not supported operation")
+				// }
 
 				switch found, err := db.ExistsKnownOperation(meta.Operation()); {
 				case err != nil:

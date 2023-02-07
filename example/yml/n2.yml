@@ -1,0 +1,31 @@
+address: node2sas
+privatekey: GnVHu5ziC1aJzGwnNopuQN5QEViGmrUvcN5pTX4tYKkLmpr
+# publickey: zd7ngCLB4G9a1U1bEqd4d7rQjXPcHXDyDtPXuAeVFrH7mpu
+network_id: mitum
+network:
+  bind: 0.0.0.0:4322
+  # publish: localhost:4322
+  tls_insecure: true
+storage:
+  base: ./multi-data/mitum-data2
+  # database: leveldb://
+# digest:
+#   network:
+#     bind: http://localhost:54322
+#     url: http://localhost:54322
+#   database: 
+#     uri: mongodb://127.0.0.1:27017/mc-muilti-2
+
+sync_sources:
+  - type: sync-source-node
+    address: node0sas
+    publickey: mfDZL9aoabZfC5UiHQZKjQcqEyecCxTZMz9sFepBQzv3mpu
+    publish: localhost:4320
+    tls_insecure: true
+
+parameters:
+  threshold: 67
+  interval_broadcast_ballot: 1150ms # 3s
+  wait_preparing_init_ballot: 1500ms # 5s
+  wait_preparing_next_round_init_ballot: 450ms # 1s
+  timeout_request_proposal: 500ms

@@ -7,6 +7,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/base"
 	"github.com/spikeekips/mitum/isaac"
 	isaacblock "github.com/spikeekips/mitum/isaac/block"
@@ -80,8 +81,8 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 	}
 
 	idletimeout := time.Second * 2 //nolint:gomnd //...
-	lastBlockMapf := quicstreamHandlerLastBlockMapFunc(db)
-	suffrageNodeConnInfof := quicstreamHandlerSuffrageNodeConnInfoFunc(db, memberlist)
+	lastBlockMapf := QuicstreamHandlerLastBlockMapFunc(db)
+	suffrageNodeConnInfof := QuicstreamHandlerSuffrageNodeConnInfoFunc(db, memberlist)
 
 	handlers.
 		Add(isaacnetwork.HandlerPrefixOperation, isaacnetwork.QuicstreamHandlerOperation(encs, idletimeout, pool)).
@@ -203,7 +204,7 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 			isaacnetwork.QuicstreamHandlerExistsInStateOperation(encs, idletimeout, db.ExistsInStateOperation),
 		).
 		Add(isaacnetwork.HandlerPrefixNodeInfo,
-			isaacnetwork.QuicstreamHandlerNodeInfo(encs, idletimeout, quicstreamHandlerGetNodeInfoFunc(enc, nodeinfo)),
+			isaacnetwork.QuicstreamHandlerNodeInfo(encs, idletimeout, QuicstreamHandlerGetNodeInfoFunc(enc, nodeinfo)),
 		).
 		Add(isaacnetwork.HandlerPrefixCallbackMessage,
 			isaacnetwork.QuicstreamHandlerCallbackMessage(encs, idletimeout, cb),
@@ -336,7 +337,7 @@ func sendOperationFilterFunc(pctx context.Context) (
 		case !ok:
 			return false, nil
 		case !operationfilterf(hinter.Hint()):
-			return false, nil
+			return false, errors.Errorf("Not supported operation")
 		}
 
 		var height base.Height
@@ -368,7 +369,7 @@ func sendOperationFilterFunc(pctx context.Context) (
 	}, nil
 }
 
-func quicstreamHandlerLastBlockMapFunc(
+func QuicstreamHandlerLastBlockMapFunc(
 	db isaac.Database,
 ) func(last util.Hash) (hint.Hint, []byte, []byte, bool, error) {
 	return func(last util.Hash) (hint.Hint, []byte, []byte, bool, error) {
@@ -392,7 +393,7 @@ func quicstreamHandlerLastBlockMapFunc(
 	}
 }
 
-func quicstreamHandlerSuffrageNodeConnInfoFunc(
+func QuicstreamHandlerSuffrageNodeConnInfoFunc(
 	db isaac.Database,
 	memberlist *quicmemberlist.Memberlist,
 ) func() ([]isaac.NodeConnInfo, error) {
@@ -431,7 +432,7 @@ func quicstreamHandlerSuffrageNodeConnInfoFunc(
 	}
 }
 
-func quicstreamHandlerGetNodeInfoFunc(
+func QuicstreamHandlerGetNodeInfoFunc(
 	enc encoder.Encoder,
 	nodeinfo *isaacnetwork.NodeInfoUpdater,
 ) func() ([]byte, error) {

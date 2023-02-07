@@ -1,0 +1,25 @@
+facts:
+  - _hint: suffrage-genesis-join-fact-v0.0.1
+    nodes:
+      - _hint: node-v0.0.1
+        address: node0sas
+        publickey: mfDZL9aoabZfC5UiHQZKjQcqEyecCxTZMz9sFepBQzv3mpu
+      - _hint: node-v0.0.1
+        address: node1sas
+        publickey: 21U8pSHxuRZdba67T8ZxsxwA1SK9D2aKZMzMsjmHnpHx6mpu
+      - _hint: node-v0.0.1
+        address: node2sas
+        publickey: zd7ngCLB4G9a1U1bEqd4d7rQjXPcHXDyDtPXuAeVFrH7mpu
+      - _hint: node-v0.0.1
+        address: node3sas
+        publickey: 26sVZPhRph4yiPZ9JkeWTzzLnFMu8jbkSiui2L2knBBQBmpu
+  - _hint: genesis-network-policy-fact-v0.0.1
+    policy:
+      _hint: network-policy-v0.0.1
+      max_operations_in_proposal: 99
+      suffrage_candidate_lifespan: 333333333
+      suffrage_candidate_limiter:
+        _hint: fixed-suffrage-candidate-limiter-rule-v0.0.1
+        limit: 1
+      max_suffrage_size: 99
+      suffrage_withdraw_lifespan: 99
