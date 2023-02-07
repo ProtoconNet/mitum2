@@ -5,11 +5,11 @@ import (
 	"os"
 	"sync"
 
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/isaac"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/fixedtree"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/isaac"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/fixedtree"
 )
 
 var (
@@ -284,7 +284,7 @@ func IsValidBlockFromLocalFS(
 		bm = i
 	}
 
-	pr, ops, sts, opstree, ststree, vps, err := loadBlockItemsFromReader(bm, itemf, height)
+	pr, ops, sts, opstree, ststree, vps, err := LoadBlockItemsFromReader(bm, itemf, height)
 	if err != nil {
 		return err
 	}
@@ -308,7 +308,7 @@ func IsValidBlockFromLocalFS(
 	return isValidVoteproofsFromLocalFS(networkID, vps, bm.Manifest())
 }
 
-func loadBlockItemsFromReader( //revive:disable-line:function-result-limit
+func LoadBlockItemsFromReader( //revive:disable-line:function-result-limit
 	bm base.BlockMap,
 	itemf isaac.BlockItemReadersItemFunc,
 	height base.Height,

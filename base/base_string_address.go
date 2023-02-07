@@ -3,8 +3,8 @@ package base
 import (
 	"regexp"
 
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/hint"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
 var (

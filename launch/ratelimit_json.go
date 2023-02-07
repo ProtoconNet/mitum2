@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
 	"golang.org/x/time/rate"
 )
 

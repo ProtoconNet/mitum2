@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util"
 	"golang.org/x/exp/slices"
 )
 

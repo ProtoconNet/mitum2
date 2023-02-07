@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/valuehash"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/valuehash"
 )
 
 type NetworkClientLastBlockMapCommand struct { //nolint:govet //...
@@ -26,12 +26,7 @@ func (cmd *NetworkClientLastBlockMapCommand) Run(pctx context.Context) error {
 	var h util.Hash
 
 	if len(strings.TrimSpace(cmd.Hash)) > 0 {
-		switch i, err := valuehash.NewBytesFromString(cmd.Hash); {
-		case err != nil:
-			return err
-		default:
-			h = i
-		}
+		h = valuehash.NewBytesFromString(cmd.Hash)
 	}
 
 	ctx, cancel := context.WithTimeout(pctx, cmd.Timeout)

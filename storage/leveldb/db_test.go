@@ -6,7 +6,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/spikeekips/mitum/util"
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/stretchr/testify/suite"
 	"github.com/syndtr/goleveldb/leveldb"
 	leveldbStorage "github.com/syndtr/goleveldb/leveldb/storage"

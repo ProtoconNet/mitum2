@@ -7,9 +7,9 @@ import (
 	"net"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
 	"github.com/quic-go/quic-go"
-	"github.com/spikeekips/mitum/util"
 )
 
 var ErrNetwork = util.NewIDError("network error")

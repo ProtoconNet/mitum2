@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/ProtoconNet/mitum2/util/fixedtree"
+	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/ProtoconNet/mitum2/util/valuehash"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
-	"github.com/spikeekips/mitum/util/fixedtree"
-	"github.com/spikeekips/mitum/util/hint"
-	"github.com/spikeekips/mitum/util/valuehash"
 )
 
 var (
@@ -73,13 +73,13 @@ func NewNotInStateOperationFixedtreeNode(facthash util.Hash, reason string) Oper
 }
 
 func (no OperationFixedtreeNode) InState() bool {
-	_, instate, _ := ParseTreeNodeOperationKey(no.Key())
+	_, instate := ParseTreeNodeOperationKey(no.Key())
 
 	return instate
 }
 
 func (no OperationFixedtreeNode) Operation() util.Hash {
-	h, _, _ := ParseTreeNodeOperationKey(no.Key())
+	h, _ := ParseTreeNodeOperationKey(no.Key())
 
 	return h
 }
@@ -203,7 +203,7 @@ func (e *BaseOperationProcessReasonError) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func ParseTreeNodeOperationKey(s string) (util.Hash, bool, error) {
+func ParseTreeNodeOperationKey(s string) (util.Hash, bool) {
 	k := s
 
 	var notInState bool
@@ -213,12 +213,7 @@ func ParseTreeNodeOperationKey(s string) (util.Hash, bool, error) {
 		notInState = true
 	}
 
-	switch i, err := valuehash.NewBytesFromString(k); {
-	case err != nil:
-		return nil, false, err
-	default:
-		return i, !notInState, nil
-	}
+	return valuehash.NewBytesFromString(k), !notInState
 }
 
 type BaseOperationProcessor struct {

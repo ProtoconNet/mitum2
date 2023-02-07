@@ -6,12 +6,12 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/hint"
-	"github.com/spikeekips/mitum/util/logging"
 )
 
 var (
@@ -509,10 +509,10 @@ func (p *DefaultProposalProcessor) doProcessOperation(
 		return e.Errorf("not empty state must have empty reason")
 	default:
 		instate := len(stvs) > 0
-		if instate {
-			if err := writer.SetStates(ctx, opsindex, stvs, op); err != nil {
-				return e.Wrap(err)
-			}
+
+		// NOTE: origin checks instate condition
+		if err := writer.SetStates(ctx, opsindex, stvs, op); err != nil {
+			return e.Wrap(err)
 		}
 
 		if err := writer.SetProcessResult(

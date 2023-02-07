@@ -1,8 +1,8 @@
 package isaac
 
 import (
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util"
 )
 
 func IsValidVoteproofWithSuffrage(vp base.Voteproof, suf base.Suffrage) error {

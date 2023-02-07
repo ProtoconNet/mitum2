@@ -1,6 +1,6 @@
 package base
 
-import "github.com/spikeekips/mitum/util"
+import "github.com/ProtoconNet/mitum2/util"
 
 type HeightDecoder struct {
 	h       Height
