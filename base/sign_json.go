@@ -1,9 +1,9 @@
 package base
 
 import (
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
-	"github.com/spikeekips/mitum/util/localtime"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/ProtoconNet/mitum2/util/localtime"
 )
 
 type BaseSignJSONMarshaler struct {

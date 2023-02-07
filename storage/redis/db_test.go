@@ -9,10 +9,9 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/alicebob/miniredis/v2"
+	"github.com/ProtoconNet/mitum2/storage"
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/redis/go-redis/v9"
-	"github.com/spikeekips/mitum/storage"
-	"github.com/spikeekips/mitum/util"
 	"github.com/stretchr/testify/suite"
 )
 

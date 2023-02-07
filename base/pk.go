@@ -2,12 +2,12 @@ package base
 
 import (
 	"bytes"
-	"encoding/hex"
 	"fmt"
+	"github.com/btcsuite/btcutil/base58"
 
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
 )
 
 const PKKeyTypeSize = 3
@@ -39,7 +39,7 @@ func (sg Signature) Bytes() []byte {
 }
 
 func (sg Signature) String() string {
-	return hex.EncodeToString(sg)
+	return base58.Encode(sg)
 }
 
 func (sg Signature) IsValid([]byte) error {
@@ -63,14 +63,9 @@ func (sg Signature) MarshalText() ([]byte, error) {
 }
 
 func (sg *Signature) UnmarshalText(b []byte) error {
-	switch i, err := hex.DecodeString(string(b)); {
-	case err != nil:
-		return err
-	default:
-		*sg = Signature(i)
+	*sg = Signature(base58.Decode(string(b)))
 
-		return nil
-	}
+	return nil
 }
 
 func decodePKKeyFromString(s string, enc encoder.Encoder) (PKKey, error) {

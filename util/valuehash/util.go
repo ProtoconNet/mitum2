@@ -3,7 +3,7 @@ package valuehash
 import (
 	"crypto/rand"
 
-	"github.com/spikeekips/mitum/util"
+	"github.com/ProtoconNet/mitum2/util"
 )
 
 func RandomSHA256() util.Hash {

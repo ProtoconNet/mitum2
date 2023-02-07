@@ -3,9 +3,9 @@ package fixedtree
 import (
 	"strings"
 
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/valuehash"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/valuehash"
 )
 
 var emptyNodeString = "<empty>"
@@ -38,12 +38,7 @@ func ParseBaseNodeString(s string) (n BaseNode, err error) {
 	case len(l) != 2:
 		return n, e.Errorf("invalid string")
 	case len(l[0]) > 0:
-		switch i, err := valuehash.NewBytesFromString(l[0]); {
-		case err != nil:
-			return n, e.Wrap(err)
-		default:
-			n.h = i
-		}
+		n.h = valuehash.NewBytesFromString(l[0])
 	}
 
 	n.key = l[1]

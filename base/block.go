@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/fixedtree"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/fixedtree"
 )
 
 type Manifest interface {

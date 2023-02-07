@@ -8,10 +8,10 @@ import (
 	"io"
 	"net"
 
+	"github.com/ProtoconNet/mitum2/network/quicstream"
+	quicstreamheader "github.com/ProtoconNet/mitum2/network/quicstream/header"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/network/quicstream"
-	quicstreamheader "github.com/spikeekips/mitum/network/quicstream/header"
-	"github.com/spikeekips/mitum/util/encoder"
 )
 
 type DummyStreamer struct {

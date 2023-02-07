@@ -6,10 +6,10 @@ import (
 	"io"
 	"reflect"
 
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
-	"github.com/spikeekips/mitum/util/hint"
 )
 
 var JSONEncoderHint = hint.MustNewHint("json-encoder-v0.0.1")
@@ -78,6 +78,7 @@ func (enc *Encoder) Decode(b []byte) (interface{}, error) {
 	}
 
 	ht, err := enc.guessHint(b)
+
 	if err != nil {
 		return nil, err
 	}
@@ -179,6 +180,29 @@ func (enc *Encoder) DecodeSlice(b []byte) ([]interface{}, error) {
 		}
 
 		s[i] = k
+	}
+
+	return s, nil
+}
+
+func (enc *Encoder) DecodeMap(b []byte) (map[string]interface{}, error) {
+	if len(b) < 1 {
+		return nil, nil
+	}
+
+	var r map[string]json.RawMessage
+	if err := util.UnmarshalJSON(b, &r); err != nil {
+		return nil, errors.Wrap(err, "failed to decode map")
+	}
+
+	s := map[string]interface{}{}
+	for i := range r {
+		j, err := enc.Decode(r[i])
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to decode map")
+		}
+
+		s[i] = j
 	}
 
 	return s, nil

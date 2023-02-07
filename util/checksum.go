@@ -2,7 +2,7 @@ package util
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
+	"fmt"
 	"hash"
 	"io"
 	"sync"
@@ -182,5 +182,5 @@ func (r *HashChecksumReader) Checksum() string {
 }
 
 func checksumstring(h hash.Hash) string {
-	return hex.EncodeToString(h.Sum(nil))
+	return fmt.Sprintf("%x", h.Sum(nil))
 }

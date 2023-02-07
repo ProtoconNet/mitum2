@@ -3,8 +3,8 @@ package localtime
 import (
 	"time"
 
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
 )
 
 type Time struct {

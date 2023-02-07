@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/network/quicstream"
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/network/quicstream"
-	"github.com/spikeekips/mitum/util"
 )
 
 var errFailedToRequestProposalToNode = util.NewIDError("request proposal to node")

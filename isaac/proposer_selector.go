@@ -3,9 +3,9 @@ package isaac
 import (
 	"context"
 
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util"
 )
 
 // ProposerSelectFunc selects proposer between suffrage nodes. If failed to

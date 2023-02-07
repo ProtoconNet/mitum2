@@ -5,10 +5,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/beevik/ntp"
 	"github.com/rs/zerolog"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/logging"
 )
 
 var (

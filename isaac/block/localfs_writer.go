@@ -17,13 +17,13 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/isaac"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/ProtoconNet/mitum2/util/fixedtree"
+	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/isaac"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
-	"github.com/spikeekips/mitum/util/fixedtree"
-	"github.com/spikeekips/mitum/util/hint"
 )
 
 var LocalFSWriterHint = hint.MustNewHint("block-localfs-writer-v0.0.1")
@@ -470,7 +470,7 @@ func (w *LocalFSWriter) setTree(
 }
 
 func (w *LocalFSWriter) saveMap() error {
-	e := util.StringError("filed to save map")
+	e := util.StringError("failed to save map")
 
 	// NOTE sign blockmap by local node
 	if err := w.m.Sign(w.local.Address(), w.local.Privatekey(), w.networkID); err != nil {

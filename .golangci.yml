@@ -1394,7 +1394,7 @@ linters-settings:
     ignorePackageGlobs:
       - encoding/*
       - github.com/pkg/*
-      - github.com/spikeekips/mitum/*
+      - github.com/socialinfratech/mitum2/*
     ignoreInterfaceRegexps:
       - ^(?i)c(?-i)ach(ing|e)
 

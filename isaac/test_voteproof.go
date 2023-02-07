@@ -6,8 +6,8 @@ package isaac
 import (
 	"time"
 
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util/localtime"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util/localtime"
 	"github.com/stretchr/testify/assert"
 )
 

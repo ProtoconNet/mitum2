@@ -3,13 +3,13 @@ package isaacnetwork
 import (
 	"encoding/json"
 
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/isaac"
-	isaacstates "github.com/spikeekips/mitum/isaac/states"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
-	"github.com/spikeekips/mitum/util/hint"
-	"github.com/spikeekips/mitum/util/localtime"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/isaac"
+	isaacstates "github.com/ProtoconNet/mitum2/isaac/states"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/ProtoconNet/mitum2/util/localtime"
 )
 
 type NodeInfoLocalJSONMarshaler struct {

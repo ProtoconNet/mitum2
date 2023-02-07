@@ -6,14 +6,14 @@ import (
 	"io"
 	"net/url"
 
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/isaac"
+	isaacstates "github.com/ProtoconNet/mitum2/isaac/states"
+	"github.com/ProtoconNet/mitum2/network/quicstream"
+	quicstreamheader "github.com/ProtoconNet/mitum2/network/quicstream/header"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/isaac"
-	isaacstates "github.com/spikeekips/mitum/isaac/states"
-	"github.com/spikeekips/mitum/network/quicstream"
-	quicstreamheader "github.com/spikeekips/mitum/network/quicstream/header"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
 )
 
 type BaseClient struct {
@@ -640,6 +640,24 @@ func (c *BaseClient) ExistsInStateOperation(
 	})
 
 	return found, err
+}
+
+func (c *BaseClient) NodeInfo(
+	ctx context.Context,
+	broker *quicstreamheader.ClientBroker,
+) (NodeInfo, bool, error) {
+	var ni NodeInfo
+
+	ok, err := HCReqResBodyDecOK(
+		ctx,
+		broker,
+		NewNodeInfoRequestHeader(),
+		func(enc encoder.Encoder, r io.Reader) error {
+			return encoder.DecodeReader(enc, r, &ni)
+		},
+	)
+
+	return ni, ok, err
 }
 
 func (c *BaseClient) SendBallots(
