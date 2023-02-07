@@ -3,12 +3,12 @@ package isaac
 import (
 	"encoding/json"
 
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
-	"github.com/spikeekips/mitum/util/hint"
-	"github.com/spikeekips/mitum/util/localtime"
-	"github.com/spikeekips/mitum/util/valuehash"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/ProtoconNet/mitum2/util/localtime"
+	"github.com/ProtoconNet/mitum2/util/valuehash"
 )
 
 type proposalFactJSONMarshaler struct {

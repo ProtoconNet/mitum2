@@ -3,7 +3,7 @@ package hint
 import (
 	"regexp"
 
-	"github.com/spikeekips/mitum/util"
+	"github.com/ProtoconNet/mitum2/util"
 )
 
 var (

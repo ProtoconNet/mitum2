@@ -5,9 +5,9 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/hint"
 )
 
 var encodersExtensionMap map[hint.Type]string

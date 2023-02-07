@@ -1,8 +1,8 @@
 package base
 
 import (
+	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/rs/zerolog"
-	"github.com/spikeekips/mitum/util/hint"
 )
 
 func ManifestLog(m Manifest) *zerolog.Event {

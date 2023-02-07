@@ -4,10 +4,10 @@ import (
 	"context"
 	"os"
 
+	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
+	quicstreamheader "github.com/ProtoconNet/mitum2/network/quicstream/header"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/pkg/errors"
-	isaacnetwork "github.com/spikeekips/mitum/isaac/network"
-	quicstreamheader "github.com/spikeekips/mitum/network/quicstream/header"
-	"github.com/spikeekips/mitum/util/encoder"
 )
 
 type NetworkClientNodeInfoCommand struct { //nolint:govet //...

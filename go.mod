@@ -1,4 +1,4 @@
-module github.com/spikeekips/mitum
+module github.com/ProtoconNet/mitum2
 
 go 1.21
 
@@ -10,8 +10,9 @@ require (
 	github.com/beevik/ntp v1.3.1
 	github.com/bluele/gcache v0.0.2
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
-	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0
-	github.com/bytedance/sonic v1.11.3
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
+	
+	github.com/bytedance/sonic v1.10.2
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/hashicorp/consul/api v1.28.2
 	github.com/hashicorp/memberlist v0.5.1

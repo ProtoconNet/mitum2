@@ -1,8 +1,8 @@
 package hint
 
 import (
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
 )
 
 type CompatibleSet[T any] struct {

@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/rs/zerolog"
-	"github.com/spikeekips/mitum/util"
 )
 
 type ConnInfo interface {

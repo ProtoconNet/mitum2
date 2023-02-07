@@ -4,8 +4,8 @@
 package base
 
 import (
-	"github.com/spikeekips/mitum/util/hint"
-	"github.com/spikeekips/mitum/util/localtime"
+	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/ProtoconNet/mitum2/util/localtime"
 	"github.com/stretchr/testify/assert"
 )
 

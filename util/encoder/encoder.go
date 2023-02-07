@@ -3,8 +3,8 @@ package encoder
 import (
 	"io"
 
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/hint"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
 type Encoder interface { //nolint:interfacebloat //...
@@ -20,6 +20,7 @@ type Encoder interface { //nolint:interfacebloat //...
 	DecodeWithHintType([]byte, hint.Type) (interface{}, error) // NOTE decode []byte by given type
 	DecodeWithFixedHintType(string, int) (interface{}, error)  // NOTE decode string by fixed type size
 	DecodeSlice([]byte) ([]interface{}, error)                 // NOTE decode sliced data
+	DecodeMap([]byte) (map[string]interface{}, error)          // NOTE decode map data
 }
 
 type DecodeFunc func([]byte, hint.Hint) (interface{}, error)

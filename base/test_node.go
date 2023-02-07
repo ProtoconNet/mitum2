@@ -3,7 +3,7 @@
 
 package base
 
-import "github.com/spikeekips/mitum/util/hint"
+import "github.com/ProtoconNet/mitum2/util/hint"
 
 var DummyNodeHint = hint.MustNewHint("dummy-node-v0.0.1")
 

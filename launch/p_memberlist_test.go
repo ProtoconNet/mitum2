@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/network/quicstream"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/network/quicstream"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/goleak"
 )

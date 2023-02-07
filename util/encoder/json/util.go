@@ -1,6 +1,6 @@
 package jsonenc
 
-import "github.com/spikeekips/mitum/util/encoder"
+import "github.com/ProtoconNet/mitum2/util/encoder"
 
 type Decodable interface {
 	DecodeJSON([]byte, encoder.Encoder) error

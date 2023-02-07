@@ -1,9 +1,9 @@
 package isaacoperation
 
 import (
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 type suffrageDisjoinFactJSONMarshaler struct {

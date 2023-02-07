@@ -3,7 +3,7 @@ package isaac
 import (
 	"testing"
 
-	"github.com/spikeekips/mitum/base"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/stretchr/testify/suite"
 )
 

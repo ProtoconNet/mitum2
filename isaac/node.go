@@ -1,8 +1,8 @@
 package isaac
 
 import (
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util/hint"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
 var NodeHint = hint.MustNewHint("node-v0.0.1")

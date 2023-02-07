@@ -5,9 +5,9 @@ import (
 	"context"
 	"sync"
 
+	"github.com/ProtoconNet/mitum2/storage"
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/storage"
-	"github.com/spikeekips/mitum/util"
 	"github.com/syndtr/goleveldb/leveldb"
 	leveldbOpt "github.com/syndtr/goleveldb/leveldb/opt"
 	leveldbStorage "github.com/syndtr/goleveldb/leveldb/storage"

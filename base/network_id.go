@@ -2,10 +2,9 @@ package base
 
 import (
 	"bytes"
-	"encoding/hex"
-
+	"encoding/base64"
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
 )
 
 // NetworkID will be used to separate mitum network with the other mitum
@@ -38,11 +37,11 @@ func (ni NetworkID) Equal(a NetworkID) bool {
 }
 
 func (ni NetworkID) MarshalText() ([]byte, error) {
-	return []byte(hex.EncodeToString(ni.Bytes())), nil
+	return []byte(base64.StdEncoding.EncodeToString(ni.Bytes())), nil
 }
 
 func (ni *NetworkID) UnmarshalText(b []byte) error {
-	s, err := hex.DecodeString(string(b))
+	s, err := base64.StdEncoding.DecodeString(string(b))
 	if err != nil {
 		return errors.Wrap(err, "unmarshal NetworkID")
 	}

@@ -1,15 +1,16 @@
 package base
 
 import (
-	"encoding/hex"
+	"fmt"
 	"strings"
 
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/hint"
 	btcec "github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/hint"
 )
 
 // MPublickey is the default publickey of mitum, it is based on BTC Privatekey.
@@ -39,26 +40,16 @@ func ParseMPublickey(s string) (*MPublickey, error) {
 }
 
 func LoadMPublickey(s string) (*MPublickey, error) {
-	switch i, err := hex.DecodeString(s); {
-	case err != nil:
-		return nil, err
-	default:
-		k, err := btcec.ParsePubKey(i)
-		if err != nil {
-			return nil, util.ErrInvalid.WithMessage(err, "load publickey")
-		}
-
-		return NewMPublickey(k), nil
+	k, err := btcec.ParsePubKey(base58.Decode(s))
+	if err != nil {
+		return nil, util.ErrInvalid.WithMessage(err, "load publickey")
 	}
+
+	return NewMPublickey(k), nil
 }
 
 func (k *MPublickey) String() string {
-	var s strings.Builder
-
-	_, _ = s.WriteString(hex.EncodeToString(k.k.SerializeCompressed()))
-	_, _ = s.WriteString(k.Hint().Type().String())
-
-	return s.String()
+	return fmt.Sprintf("%s%s", base58.Encode(k.k.SerializeCompressed()), k.Hint().Type().String())
 }
 
 func (k *MPublickey) Bytes() []byte {

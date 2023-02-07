@@ -3,9 +3,9 @@ package base
 import (
 	"time"
 
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/localtime"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/localtime"
 )
 
 type Signer interface {

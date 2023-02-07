@@ -3,9 +3,9 @@ package quicstream
 import (
 	"testing"
 
-	"github.com/spikeekips/mitum/network"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
+	"github.com/ProtoconNet/mitum2/network"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/stretchr/testify/suite"
 )
 

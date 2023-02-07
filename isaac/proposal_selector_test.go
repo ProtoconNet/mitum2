@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util"
+	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/valuehash"
 	"github.com/bluele/gcache"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util"
-	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
-	"github.com/spikeekips/mitum/util/valuehash"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -184,10 +184,7 @@ func (t *testBaseProposalSelector) TestNew() {
 
 	t.T().Logf("available nodes: %d", len(nodes))
 
-	prev, err := valuehash.NewBytesFromString("7591248cde9db72e96dfe17feccb701cc5b2abd62d9d4af755b758c1bf1dae79")
-	t.NoError(err)
-	t.T().Log("previous block:", prev)
-
+	prev := valuehash.NewBytesFromString("5pjdLQojuwtQAN1FdEL1V1uvDdZi2koPJWLqJzo27yzBqn8WkNpXgypsF4VUBHwCtgduQw14N3sg7UHSjc6K2B25")
 	point := base.RawPoint(66, 11)
 	pr, err := p.Select(context.Background(), point, prev, 0)
 	t.NoError(err)
@@ -200,10 +197,7 @@ func (t *testBaseProposalSelector) TestNew() {
 	t.T().Logf("selected proposer: %q", pr.ProposalFact().Proposer())
 
 	t.Run("different previous block", func() {
-		prev, err = valuehash.NewBytesFromString("7bdd6043068e7026a1fd8592d5f457ffba1ae3bd0869d6f797db16548bc6bc87")
-		t.NoError(err)
-		t.T().Log("previous block:", prev)
-
+		prev = valuehash.NewBytesFromString("7bdd6043068e7026a1fd8592d5f457ffba1ae3bd0869d6f797db16548bc6bc87")
 		apr, err := p.Select(context.Background(), point, prev, 0)
 		t.NoError(err)
 		t.NotNil(pr)

@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
 	"github.com/spikeekips/mitum/util"
 	"github.com/stretchr/testify/suite"

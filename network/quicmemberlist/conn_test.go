@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/spikeekips/mitum/util"
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/goleak"
 )

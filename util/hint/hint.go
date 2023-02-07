@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
 )
 
 var (

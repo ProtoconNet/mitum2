@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/spikeekips/mitum/util"
+	"github.com/ProtoconNet/mitum2/util"
 )
 
 type Node interface {

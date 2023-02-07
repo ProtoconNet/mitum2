@@ -4,8 +4,8 @@
 package base
 
 import (
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/hint"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
 func (s *BaseState) SetOperations(ops []util.Hash) BaseState {

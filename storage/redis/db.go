@@ -4,10 +4,10 @@ import (
 	"context"
 	"sync"
 
+	"github.com/ProtoconNet/mitum2/storage"
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
-	"github.com/spikeekips/mitum/storage"
-	"github.com/spikeekips/mitum/util"
 )
 
 type Storage struct {

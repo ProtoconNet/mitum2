@@ -7,10 +7,10 @@ import (
 	"io"
 	"net"
 
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
 	"github.com/quic-go/quic-go"
 	"github.com/rs/zerolog"
-	"github.com/spikeekips/mitum/util"
 )
 
 var ErrOpenStream = util.NewIDError("open stream")
