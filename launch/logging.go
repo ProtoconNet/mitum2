@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/logging"
 )
 
 func init() { //nolint:gochecknoinits //...

@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/spikeekips/mitum/util/logging"
 )
 
 var contextTimerPool = sync.Pool{

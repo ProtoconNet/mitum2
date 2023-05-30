@@ -3,12 +3,12 @@ package base
 import (
 	"encoding/json"
 
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
+	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/ProtoconNet/mitum2/util/valuehash"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
-	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
-	"github.com/spikeekips/mitum/util/hint"
-	"github.com/spikeekips/mitum/util/valuehash"
 )
 
 type BaseOperationJSONMarshaler struct {

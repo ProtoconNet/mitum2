@@ -3,7 +3,7 @@ package base
 import (
 	"time"
 
-	"github.com/spikeekips/mitum/util"
+	"github.com/ProtoconNet/mitum2/util"
 )
 
 type ProposalFact interface {

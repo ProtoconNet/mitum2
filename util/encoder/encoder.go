@@ -3,8 +3,8 @@ package encoder
 import (
 	"io"
 
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/hint"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
 type Encoder interface { //nolint:interfacebloat //...

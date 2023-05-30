@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
 )
 
 const PKKeyTypeSize = 3

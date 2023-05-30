@@ -3,12 +3,12 @@ package isaacblock
 import (
 	"testing"
 
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/isaac"
+	"github.com/ProtoconNet/mitum2/util/encoder"
+	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/isaac"
-	"github.com/spikeekips/mitum/util/encoder"
-	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
-	"github.com/spikeekips/mitum/util/hint"
 	"github.com/stretchr/testify/suite"
 )
 

@@ -1,9 +1,9 @@
 package hint
 
 import (
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/bluele/gcache"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
 )
 
 type CompatibleSet struct {

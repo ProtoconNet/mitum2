@@ -1,11 +1,11 @@
 package isaacblock
 
 import (
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/isaac"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/fixedtree"
-	"github.com/spikeekips/mitum/util/hint"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/isaac"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/fixedtree"
+	"github.com/ProtoconNet/mitum2/util/hint"
 )
 
 var SuffrageProofHint = hint.MustNewHint("suffrage-proof-v0.0.1")

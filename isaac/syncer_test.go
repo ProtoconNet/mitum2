@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
+	"github.com/ProtoconNet/mitum2/network/quicstream"
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/lucas-clemente/quic-go"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/network/quicmemberlist"
-	"github.com/spikeekips/mitum/network/quicstream"
-	"github.com/spikeekips/mitum/util"
 	"github.com/stretchr/testify/suite"
 )
 

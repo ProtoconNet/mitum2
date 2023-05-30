@@ -4,19 +4,19 @@ import (
 	"context"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/isaac"
+	isaacdatabase "github.com/ProtoconNet/mitum2/isaac/database"
+	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
+	isaacstates "github.com/ProtoconNet/mitum2/isaac/states"
+	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
+	"github.com/ProtoconNet/mitum2/network/quicstream"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/ProtoconNet/mitum2/util/logging"
+	"github.com/ProtoconNet/mitum2/util/ps"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/isaac"
-	isaacdatabase "github.com/spikeekips/mitum/isaac/database"
-	isaacnetwork "github.com/spikeekips/mitum/isaac/network"
-	isaacstates "github.com/spikeekips/mitum/isaac/states"
-	"github.com/spikeekips/mitum/network/quicmemberlist"
-	"github.com/spikeekips/mitum/network/quicstream"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
-	"github.com/spikeekips/mitum/util/hint"
-	"github.com/spikeekips/mitum/util/logging"
-	"github.com/spikeekips/mitum/util/ps"
 )
 
 var (
@@ -898,7 +898,7 @@ func checkLocalIsInConsensusNodesByWatcher(
 			Interface("height", updated.Map().Manifest().Height()).
 			Msg("local is not in consensus nodes; moves to syncing")
 
-			// NOTE if local is out of consensus nodes, moves to syncing state
+		// NOTE if local is out of consensus nodes, moves to syncing state
 		_ = states.MoveState(isaacstates.NewSyncingSwitchContextWithOK(
 			updated.Map().Manifest().Height(),
 			func(current isaacstates.StateType) bool {

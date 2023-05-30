@@ -3,7 +3,7 @@
 
 package isaac
 
-import "github.com/spikeekips/mitum/base"
+import "github.com/ProtoconNet/mitum2/base"
 
 func (p *NetworkPolicy) SetMaxOperationsInProposal(i uint64) *NetworkPolicy {
 	p.maxOperationsInProposal = i

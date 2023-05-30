@@ -10,15 +10,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/network/quicstream"
+	"github.com/ProtoconNet/mitum2/util"
+	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/bluele/gcache"
 	"github.com/hashicorp/memberlist"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/network/quicstream"
-	"github.com/spikeekips/mitum/util"
-	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
-	"github.com/spikeekips/mitum/util/logging"
 )
 
 var errIgnoreAllowNode = util.NewError("ignore to allow node")

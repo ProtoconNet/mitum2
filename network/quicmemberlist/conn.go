@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/network"
+	"github.com/ProtoconNet/mitum2/network/quicstream"
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/network"
-	"github.com/spikeekips/mitum/network/quicstream"
-	"github.com/spikeekips/mitum/util"
 )
 
 type NamedAddr struct {

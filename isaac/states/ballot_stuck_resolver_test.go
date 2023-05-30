@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/isaac"
+	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/isaac"
-	"github.com/spikeekips/mitum/util/logging"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/goleak"
 )

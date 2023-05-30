@@ -1,8 +1,8 @@
 package isaacstates
 
 import (
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/isaac"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/isaac"
 )
 
 type StoppedHandler struct {

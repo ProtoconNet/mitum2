@@ -3,8 +3,8 @@ package valuehash
 import (
 	"bytes"
 
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
 )
 
 const maxBytesHashSize = 100

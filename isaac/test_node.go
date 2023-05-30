@@ -3,7 +3,7 @@
 
 package isaac
 
-import "github.com/spikeekips/mitum/base"
+import "github.com/ProtoconNet/mitum2/base"
 
 func RandomLocalNode() LocalNode {
 	return NewLocalNode(base.NewMPrivatekey(), base.RandomAddress("local-"))

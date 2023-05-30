@@ -7,9 +7,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util"
 )
 
 type SuffrageVoteFunc func(base.SuffrageWithdrawOperation) (bool, error)

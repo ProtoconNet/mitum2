@@ -7,9 +7,9 @@ import (
 	"net"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/lucas-clemente/quic-go"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
 )
 
 type PoolClient struct {

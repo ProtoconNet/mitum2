@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/hint"
 	btcec "github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
 	"github.com/btcsuite/btcd/btcutil/base58"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/hint"
 )
 
 // MPublickey is the default publickey of mitum, it is based on BTC Privatekey.

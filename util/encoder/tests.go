@@ -4,7 +4,7 @@
 package encoder
 
 import (
-	"github.com/spikeekips/mitum/util/hint"
+	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/stretchr/testify/suite"
 )
 

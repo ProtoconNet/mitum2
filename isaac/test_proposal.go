@@ -6,9 +6,9 @@ package isaac
 import (
 	"context"
 
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util"
 )
 
 func (pps *ProposalProcessors) SetMakeNew(f func(proposal base.ProposalSignFact, previous base.Manifest) (ProposalProcessor, error)) {

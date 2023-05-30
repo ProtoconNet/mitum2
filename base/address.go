@@ -3,8 +3,8 @@ package base
 import (
 	"fmt"
 
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
 const AddressTypeSize = 3

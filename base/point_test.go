@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
 	"github.com/stretchr/testify/suite"
 )
 

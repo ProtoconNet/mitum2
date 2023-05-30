@@ -4,8 +4,8 @@ import (
 	"io"
 	"net"
 
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/valuehash"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/valuehash"
 )
 
 type (

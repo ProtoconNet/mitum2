@@ -3,9 +3,9 @@ package launchcmd
 import (
 	"context"
 
-	"github.com/spikeekips/mitum/launch"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/logging"
+	"github.com/ProtoconNet/mitum2/launch"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/logging"
 )
 
 type INITCommand struct {

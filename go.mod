@@ -1,4 +1,4 @@
-module github.com/spikeekips/mitum
+module github.com/ProtoconNet/mitum2
 
 go 1.18
 

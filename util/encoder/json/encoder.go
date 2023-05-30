@@ -6,10 +6,10 @@ import (
 	"io"
 	"reflect"
 
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/encoder"
+	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/encoder"
-	"github.com/spikeekips/mitum/util/hint"
 )
 
 var JSONEncoderHint = hint.MustNewHint("json-encoder-v2.0.0")

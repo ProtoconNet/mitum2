@@ -18,9 +18,9 @@ import (
 	"net"
 	"sync"
 
+	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/lucas-clemente/quic-go"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util/logging"
 	"github.com/stretchr/testify/suite"
 )
 

@@ -1,10 +1,10 @@
 package isaac
 
 import (
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util"
-	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
-	"github.com/spikeekips/mitum/util/valuehash"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util"
+	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/valuehash"
 )
 
 type baseBallotFactJSONMarshaler struct {

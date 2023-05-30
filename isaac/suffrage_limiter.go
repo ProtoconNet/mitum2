@@ -3,10 +3,10 @@ package isaac
 import (
 	"math"
 
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/hint"
 )
 
 var (

@@ -1,7 +1,7 @@
 package base
 
 import (
-	"github.com/spikeekips/mitum/util"
+	"github.com/ProtoconNet/mitum2/util"
 )
 
 func IsValidVoteproof(vp Voteproof, networkID NetworkID) error {

@@ -4,10 +4,10 @@ import (
 	"context"
 	"io"
 
-	"github.com/spikeekips/mitum/base"
-	"github.com/spikeekips/mitum/network"
-	"github.com/spikeekips/mitum/network/quicstream"
-	"github.com/spikeekips/mitum/util"
+	"github.com/ProtoconNet/mitum2/base"
+	"github.com/ProtoconNet/mitum2/network"
+	"github.com/ProtoconNet/mitum2/network/quicstream"
+	"github.com/ProtoconNet/mitum2/util"
 )
 
 // revive:disable:line-length-limit

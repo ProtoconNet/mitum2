@@ -3,9 +3,9 @@ package isaacnetwork
 import (
 	"testing"
 
+	"github.com/ProtoconNet/mitum2/util/encoder"
+	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util/encoder"
-	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
 	"github.com/stretchr/testify/suite"
 )
 

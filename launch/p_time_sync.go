@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/localtime"
-	"github.com/spikeekips/mitum/util/logging"
-	"github.com/spikeekips/mitum/util/ps"
+	"github.com/ProtoconNet/mitum2/util"
+	"github.com/ProtoconNet/mitum2/util/localtime"
+	"github.com/ProtoconNet/mitum2/util/logging"
+	"github.com/ProtoconNet/mitum2/util/ps"
 )
 
 var DefaultTimeSyncerInterval = time.Minute * 10

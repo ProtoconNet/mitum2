@@ -6,11 +6,11 @@ package base
 import (
 	"encoding/json"
 
+	"github.com/ProtoconNet/mitum2/util"
+	jsonenc "github.com/ProtoconNet/mitum2/util/encoder/json"
+	"github.com/ProtoconNet/mitum2/util/fixedtree"
+	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/pkg/errors"
-	"github.com/spikeekips/mitum/util"
-	jsonenc "github.com/spikeekips/mitum/util/encoder/json"
-	"github.com/spikeekips/mitum/util/fixedtree"
-	"github.com/spikeekips/mitum/util/hint"
 	"github.com/stretchr/testify/assert"
 )
 
