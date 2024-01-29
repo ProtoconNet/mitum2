@@ -502,7 +502,8 @@ func (p *DefaultProposalProcessor) doProcessOperation(
 		f = i
 	}
 
-	switch stvs, errorreason, err := f(ctx); {
+	stvs, errorreason, err := f(ctx)
+	switch {
 	case err != nil:
 		return err
 	case len(stvs) < 1:
@@ -511,19 +512,19 @@ func (p *DefaultProposalProcessor) doProcessOperation(
 		}
 	case errorreason != nil:
 		return e.Errorf("not empty state must have empty reason")
-	default:
-		instate := len(stvs) > 0
+	}
 
-		// NOTE: origin checks instate condition
-		if err := writer.SetStates(ctx, opsindex, stvs, op); err != nil {
-			return e.Wrap(err)
-		}
+	instate := len(stvs) > 0
 
-		if err := writer.SetProcessResult(
-			ctx, opsindex, op.Hash(), op.Fact().Hash(), instate, errorreason,
-		); err != nil {
-			return e.Wrap(err)
-		}
+	// NOTE: origin checks instate condition
+	if err := writer.SetStates(ctx, opsindex, stvs, op); err != nil {
+		return e.Wrap(err)
+	}
+
+	if err := writer.SetProcessResult(
+		ctx, opsindex, op.Hash(), op.Fact().Hash(), instate, errorreason,
+	); err != nil {
+		return e.Wrap(err)
 	}
 
 	return nil
