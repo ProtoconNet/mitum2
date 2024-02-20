@@ -52,7 +52,7 @@ func (cmd *CleanCommand) Run(pctx context.Context) error {
 	nctx := util.ContextWithValues(pctx, map[util.ContextKey]interface{}{
 		launch.DesignFlagContextKey: cmd.DesignFlag,
 		launch.DevFlagsContextKey:   cmd.DevFlags,
-		launch.PrivatekeyContextKey: cmd.PrivatekeyFlags,
+		launch.PrivatekeyContextKey: string(cmd.PrivatekeyFlags.Flag.Body()),
 	})
 
 	cmd.log.Debug().Interface("process", pps.Verbose()).Msg("process ready")
