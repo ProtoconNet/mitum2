@@ -2,7 +2,6 @@ package isaacnetwork
 
 import (
 	"encoding/json"
-
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
 	isaacstates "github.com/ProtoconNet/mitum2/isaac/states"
@@ -10,6 +9,8 @@ import (
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/localtime"
+	"github.com/pkg/errors"
+	"reflect"
 )
 
 type NodeInfoLocalJSONMarshaler struct {
@@ -125,11 +126,24 @@ func (info *NodeInfo) DecodeJSON(b []byte, enc encoder.Encoder) error {
 		info.publickey = i
 	}
 
-	params := isaac.NewParams(info.networkID)
+	//params := isaac.NewParams(info.networkID)
+	var params *isaac.Params
 
-	if err := encoder.Decode(enc, u.Local.LocalParams, params); err != nil {
+	hinter, err := enc.Decode(u.Local.LocalParams)
+	if err != nil {
 		return e.Wrap(err)
 	}
+
+	if hinter == nil {
+		return nil
+	}
+
+	i, ok := hinter.(*isaac.Params)
+	if !ok {
+		return errors.Errorf("expected %v, but %T", reflect.TypeOf(params).Elem(), hinter)
+	}
+
+	params = i
 
 	if err := params.SetNetworkID(info.networkID); err != nil {
 		return e.Wrap(err)
