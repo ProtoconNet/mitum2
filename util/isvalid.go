@@ -34,7 +34,7 @@ func checkIsValider(b []byte, allowNil bool, i int, v IsValider) error { // revi
 			return nil
 		}
 
-		return ErrInvalid.Errorf("%dth: nil found", i)
+		return ErrInvalid.Errorf("%dth nil found", i)
 	}
 
 	if err := v.IsValid(b); err != nil {

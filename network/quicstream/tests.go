@@ -18,10 +18,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/quic-go/quic-go"
-	"github.com/spikeekips/mitum/util"
-	"github.com/spikeekips/mitum/util/logging"
 	"github.com/stretchr/testify/suite"
 )
 
