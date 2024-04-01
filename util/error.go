@@ -64,7 +64,7 @@ func (er *baseError) WithMessage(err error, format string, args ...interface{}) 
 	extra := fmt.Sprintf(format, args...)
 
 	if len(er.extra) > 0 {
-		extra = er.extra + "; " + extra
+		extra = er.extra + ": " + extra
 	}
 
 	return &baseError{
@@ -81,7 +81,7 @@ func (er *baseError) Errorf(format string, args ...interface{}) *baseError {
 	extra := fmt.Sprintf(format, args...)
 
 	if len(er.extra) > 0 {
-		extra = er.extra + "; " + extra
+		extra = er.extra + ": " + extra
 	}
 
 	return &baseError{
@@ -125,7 +125,7 @@ func (er *baseError) Error() string {
 
 	if er.wrapped != nil {
 		if e := er.wrapped.Error(); len(e) > 0 {
-			s += "; " + e
+			s += ": " + e
 		}
 	}
 
@@ -153,7 +153,7 @@ func (er *baseError) Format(st fmt.State, verb rune) {
 				} else {
 					var d string
 					if len(er.msg) > 0 {
-						d = "; "
+						d = ": "
 					}
 					_, _ = fmt.Fprintf(st, "%s\n%+v", d, er.wrapped)
 				}
