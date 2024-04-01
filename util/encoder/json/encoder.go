@@ -244,8 +244,6 @@ func (*Encoder) guessHint(b []byte) (string, error) {
 }
 
 func (enc *Encoder) analyze(d encoder.DecodeDetail, v interface{}) encoder.DecodeDetail {
-	e := util.StringError("analyze")
-
 	orig := reflect.ValueOf(v)
 	ptr, elem := encoder.Ptr(orig)
 
@@ -263,10 +261,11 @@ func (enc *Encoder) analyze(d encoder.DecodeDetail, v interface{}) encoder.Decod
 	case Decodable:
 		d.Desc = "JSONDecodable"
 		d.Decode = func(b []byte, _ hint.Hint) (interface{}, error) {
+			e := util.StringError("DecodeJSON")
 			i := reflect.New(elem.Type()).Interface()
 
 			if err := i.(Decodable).DecodeJSON(b, enc); err != nil { //nolint:forcetypeassert //...
-				return nil, e.WithMessage(err, "DecodeJSON")
+				return nil, e.Wrap(err)
 			}
 
 			return tointerface(i), nil
@@ -274,10 +273,11 @@ func (enc *Encoder) analyze(d encoder.DecodeDetail, v interface{}) encoder.Decod
 	case json.Unmarshaler:
 		d.Desc = "JSONUnmarshaler"
 		d.Decode = func(b []byte, _ hint.Hint) (interface{}, error) {
+			e := util.StringError("UnmarshalJSON")
 			i := reflect.New(elem.Type()).Interface()
 
 			if err := i.(json.Unmarshaler).UnmarshalJSON(b); err != nil { //nolint:forcetypeassert //...
-				return nil, e.WithMessage(err, "UnmarshalJSON")
+				return nil, e.Wrap(err)
 			}
 
 			return tointerface(i), nil
@@ -285,10 +285,11 @@ func (enc *Encoder) analyze(d encoder.DecodeDetail, v interface{}) encoder.Decod
 	case encoding.TextUnmarshaler:
 		d.Desc = "TextUnmarshaler"
 		d.Decode = func(b []byte, _ hint.Hint) (interface{}, error) {
+			e := util.StringError("UnmarshalText")
 			i := reflect.New(elem.Type()).Interface()
 
 			if err := i.(encoding.TextUnmarshaler).UnmarshalText(b); err != nil { //nolint:forcetypeassert //...
-				return nil, e.WithMessage(err, "UnmarshalText")
+				return nil, e.Wrap(err)
 			}
 
 			return tointerface(i), nil
@@ -296,10 +297,11 @@ func (enc *Encoder) analyze(d encoder.DecodeDetail, v interface{}) encoder.Decod
 	default:
 		d.Desc = "native"
 		d.Decode = func(b []byte, _ hint.Hint) (interface{}, error) {
+			e := util.StringError("native UnmarshalJSON")
 			i := reflect.New(elem.Type()).Interface()
 
 			if err := util.UnmarshalJSON(b, i); err != nil {
-				return nil, e.WithMessage(err, "native UnmarshalJSON")
+				return nil, e.Wrap(err)
 			}
 
 			return tointerface(i), nil

@@ -87,7 +87,7 @@ func (si BaseSign) IsValid([]byte) error {
 		si.signature,
 		util.DummyIsValider(func([]byte) error {
 			if si.signedAt.IsZero() {
-				return util.ErrInvalid.Errorf("empty signedAt in BaseSign")
+				return errors.Errorf("empty signedAt")
 			}
 
 			return nil
