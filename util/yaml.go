@@ -1,11 +1,13 @@
 package util
 
 import (
+	"bytes"
 	"fmt"
-	"reflect"
-
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
+	"os"
+	"reflect"
+	"regexp"
 )
 
 type YAMLOrderedMap struct {
@@ -189,4 +191,24 @@ func UnmarshalYAMLNodeWithYAMLOrderedMap(y *yaml.Node) (interface{}, error) {
 
 		return u, nil
 	}
+}
+
+func ReplaceEnvVariables(content []byte) ([]byte, error) {
+	envRegex := regexp.MustCompile(`\${(\w+)}`)
+	var errBuffer bytes.Buffer
+
+	result := envRegex.ReplaceAllFunc(content, func(match []byte) []byte {
+		envVar := string(match[2 : len(match)-1])
+		value, found := os.LookupEnv(envVar)
+		if !found {
+			errBuffer.WriteString(fmt.Sprintf("environment variable %s not found\n", envVar))
+		}
+		return []byte(value)
+	})
+
+	if errBuffer.Len() > 0 {
+		return result, fmt.Errorf("one or more environment variables were not found:\n%s", errBuffer.String())
+	}
+
+	return result, nil
 }
