@@ -62,13 +62,18 @@ func (p *LocalParams) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
 
 	e := util.StringError("decode LocalParams")
 
+	nb, err := util.ReplaceEnvVariables(b)
+	if err != nil {
+		return e.Wrap(err)
+	}
+
 	u := LocalParamsYAMLUnmarshaler{
 		Memberlist: p.Memberlist,
 		MISC:       p.MISC,
 		Network:    p.Network,
 	}
 
-	if err := yaml.Unmarshal(b, &u); err != nil {
+	if err := yaml.Unmarshal(nb, &u); err != nil {
 		return e.Wrap(err)
 	}
 

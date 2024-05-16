@@ -16,8 +16,13 @@ import (
 func (d *SyncSource) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
 	e := util.StringError("decode SyncSource")
 
+	nb, err := util.ReplaceEnvVariables(b)
+	if err != nil {
+		return e.Wrap(err)
+	}
+
 	var v interface{}
-	if err := yaml.Unmarshal(b, &v); err != nil {
+	if err := yaml.Unmarshal(nb, &v); err != nil {
 		return e.Wrap(err)
 	}
 

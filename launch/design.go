@@ -236,8 +236,13 @@ func (d NodeDesign) MarshalYAML() (interface{}, error) {
 func (d *NodeDesign) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
 	e := util.StringError("decode NodeDesign")
 
+	nb, err := util.ReplaceEnvVariables(b)
+	if err != nil {
+		return e.Wrap(err)
+	}
+
 	var u NodeDesignYAMLUnmarshaler
-	if err := yaml.Unmarshal(b, &u); err != nil {
+	if err := yaml.Unmarshal(nb, &u); err != nil {
 		return e.Wrap(err)
 	}
 
@@ -399,9 +404,14 @@ func (y *NodeNetworkDesignMarshaler) Decode(encoder.Encoder) (d NodeNetworkDesig
 func (d *NodeNetworkDesign) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
 	e := util.StringError("decode NodeNetworkDesign")
 
+	nb, err := util.ReplaceEnvVariables(b)
+	if err != nil {
+		return e.Wrap(err)
+	}
+
 	var u NodeNetworkDesignMarshaler
 
-	if err := yaml.Unmarshal(b, &u); err != nil {
+	if err := yaml.Unmarshal(nb, &u); err != nil {
 		return e.Wrap(err)
 	}
 
@@ -497,9 +507,14 @@ func (d NodeStorageDesign) MarshalYAML() (interface{}, error) {
 func (d *NodeStorageDesign) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
 	e := util.StringError("decode NodeStorageDesign")
 
+	nb, err := util.ReplaceEnvVariables(b)
+	if err != nil {
+		return e.Wrap(err)
+	}
+
 	var u NodeStorageDesignLMarshaler
 
-	if err := yaml.Unmarshal(b, &u); err != nil {
+	if err := yaml.Unmarshal(nb, &u); err != nil {
 		return e.Wrap(err)
 	}
 
@@ -547,9 +562,14 @@ func (*GenesisDesign) IsValid([]byte) error {
 func (d *GenesisDesign) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
 	e := util.StringError("decode GenesisOpertionsDesign")
 
+	nb, err := util.ReplaceEnvVariables(b)
+	if err != nil {
+		return e.Wrap(err)
+	}
+
 	var u GenesisDesignYAMLUnmarshaler
 
-	if err := yaml.Unmarshal(b, &u); err != nil {
+	if err := yaml.Unmarshal(nb, &u); err != nil {
 		return e.Wrap(err)
 	}
 
@@ -652,8 +672,13 @@ func (d *SyncSourcesDesign) MarshalYAML() (interface{}, error) {
 func (d *SyncSourcesDesign) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
 	e := util.StringError("decode SyncSourcesDesign")
 
+	nb, err := util.ReplaceEnvVariables(b)
+	if err != nil {
+		return e.Wrap(err)
+	}
+
 	var v []interface{}
-	if err := yaml.Unmarshal(b, &v); err != nil {
+	if err := yaml.Unmarshal(nb, &v); err != nil {
 		return e.Wrap(err)
 	}
 
