@@ -31,7 +31,7 @@ type baseSignJSONUnmarshaler struct {
 }
 
 func (si *BaseSign) DecodeJSON(b []byte, enc encoder.Encoder) error {
-	e := util.StringError("faied to decode BaseSign")
+	e := util.StringError("failed to decode BaseSign")
 
 	var u baseSignJSONUnmarshaler
 	if err := util.UnmarshalJSON(b, &u); err != nil {
