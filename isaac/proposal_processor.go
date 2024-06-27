@@ -432,6 +432,10 @@ func (p *DefaultProposalProcessor) processOperation(
 		return pctx, true, errors.WithMessage(err, "pre process operation")
 	case reasonerr != nil:
 		if err := worker.NewJob(func(ctx context.Context, _ uint64) error {
+			if err := writer.SetStates(ctx, uint64(opsindex), []base.StateMergeValue{}, op); err != nil {
+				return err
+			}
+
 			return writer.SetProcessResult(
 				ctx, uint64(opsindex), op.Hash(), op.Fact().Hash(), false, reasonerr,
 			)
