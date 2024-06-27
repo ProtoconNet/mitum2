@@ -310,6 +310,10 @@ func (db *TempPool) OperationHashes(
 				removeops[removeopsindex] = meta.Operation()
 				removeopsindex++
 
+				if removeopsindex == limit {
+					return false, nil
+				}
+
 				return true, nil
 			}
 
