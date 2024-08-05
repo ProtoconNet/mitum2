@@ -550,10 +550,19 @@ func (st *voteproofHandler) newINITVoteproofWithLastACCEPTVoteproof(
 
 		return nil
 	default:
-		if m := lavp.BallotMajority(); m == nil || !ivp.BallotMajority().PreviousBlock().Equal(m.NewBlock()) {
+		if m := lavp.BallotMajority(); m == nil {
 			// NOTE local stored block is different with other nodes
 			st.Log().Debug().
 				Stringer("previous_block", ivp.BallotMajority().PreviousBlock()).
+				Interface("majority", m).
+				Msg("ballot majority of last accept voteproof is nil; moves to syncing")
+
+			return newSyncingSwitchContextWithVoteproof(st.stt, ivp)
+		} else if !ivp.BallotMajority().PreviousBlock().Equal(m.NewBlock()) {
+			// NOTE local stored block is different with other nodes
+			st.Log().Debug().
+				Stringer("previous_block", ivp.BallotMajority().PreviousBlock()).
+				Stringer("last_accept_voteproof_block", m.NewBlock()).
 				Interface("majority", m).
 				Msg("previous block does not match with last accept voteproof; moves to syncing")
 
