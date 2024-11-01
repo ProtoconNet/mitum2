@@ -322,14 +322,17 @@ func (srv *Memberlist) CallbackBroadcast(b []byte, id string, notifych chan stru
 	// NOTE save b in cache first
 	srv.cbcache.Set(id, b, srv.args.CallbackBroadcastMessageExpire)
 
-	buf := bytes.NewBuffer(callbackBroadcastMessageHeaderPrefix)
-	defer buf.Reset()
-
-	switch err := srv.args.Encoder.StreamEncoder(buf).Encode(
+	switch i, err := srv.args.Encoder.Marshal(
 		NewConnInfoBroadcastMessage(id, srv.local.ConnInfo())); {
 	case err != nil:
 		return err
 	default:
+		buf := bytes.NewBuffer(nil)
+		defer buf.Reset()
+
+		_, _ = buf.Write(callbackBroadcastMessageHeaderPrefix)
+		_, _ = buf.Write(i)
+
 		srv.Broadcast(NewBroadcast(buf.Bytes(), id, notifych))
 	}
 
@@ -934,9 +937,6 @@ func (srv *Memberlist) broadcastEnsured(id string, threshold base.Threshold, exc
 
 func (srv *Memberlist) loopUserMsgs(ctx context.Context) {
 	sem := semaphore.NewWeighted(maxHandleUserMsg)
-	go func() {
-		_ = sem.Acquire(ctx, maxHandleUserMsg+1)
-	}()
 
 	ticker := time.NewTicker(time.Millisecond * 33)
 	defer ticker.Stop()

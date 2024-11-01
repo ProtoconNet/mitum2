@@ -310,7 +310,8 @@ func (p StagePoint) Compare(b StagePoint) int {
 }
 
 func (p StagePoint) Decrease() StagePoint {
-	return NewStagePoint(p.Point.PrevHeight(), p.stage)
+	//return NewStagePoint(p.Point.PrevHeight(), p.stage)
+	return NewStagePoint(p.Point.PrevRound(), p.stage)
 }
 
 func (p StagePoint) MarshalZerologObject(e *zerolog.Event) {
