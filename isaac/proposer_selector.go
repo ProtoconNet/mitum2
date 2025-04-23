@@ -40,6 +40,10 @@ func (BlockBasedProposerSelector) Select(
 
 	var sum uint64
 
+	if previousBlock == nil {
+		return nil, errors.Errorf("empty previous block")
+	}
+
 	for _, b := range previousBlock.Bytes() {
 		sum += uint64(b)
 	}
