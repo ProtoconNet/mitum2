@@ -84,10 +84,14 @@ type MemberlistParams struct {
 	retransmitMult          int
 	probeTimeout            time.Duration
 	probeInterval           time.Duration
+	gossipInterval          time.Duration
 	suspicionMult           int
 	suspicionMaxTimeoutMult int
 	udpBufferSize           int
 	extraSameMemberLimit    uint64
+	broadcastTimerMult      int
+	userMsgLoopInterval     time.Duration
+	gosshipNodes            int
 }
 
 func defaultMemberlistParams() *MemberlistParams {
@@ -99,10 +103,14 @@ func defaultMemberlistParams() *MemberlistParams {
 		retransmitMult:          config.RetransmitMult,
 		probeTimeout:            config.ProbeTimeout,
 		probeInterval:           config.ProbeInterval,
+		gossipInterval:          config.GossipInterval,
 		suspicionMult:           config.SuspicionMult,
 		suspicionMaxTimeoutMult: config.SuspicionMaxTimeoutMult,
 		udpBufferSize:           config.UDPBufferSize,
 		extraSameMemberLimit:    1, //nolint:gomnd //...
+		broadcastTimerMult:      5,
+		userMsgLoopInterval:     time.Millisecond * 33,
+		gosshipNodes:            config.GossipNodes,
 	}
 }
 
@@ -174,6 +182,38 @@ func (p *MemberlistParams) SetProbeInterval(d time.Duration) error {
 	})
 }
 
+func (p *MemberlistParams) GossipInterval() time.Duration {
+	return p.gossipInterval
+}
+
+func (p *MemberlistParams) SetGossipInterval(d time.Duration) error {
+	return p.SetDuration(d, func(d time.Duration) (bool, error) {
+		if p.gossipInterval == d {
+			return false, nil
+		}
+
+		p.gossipInterval = d
+
+		return true, nil
+	})
+}
+
+func (p *MemberlistParams) GosshipNodes() int {
+	return p.gosshipNodes
+}
+
+func (p *MemberlistParams) SetGosshipNodes(d int) error {
+	return p.SetOverZeroInt(d, func(d int) (bool, error) {
+		if p.gosshipNodes == d {
+			return false, nil
+		}
+
+		p.gosshipNodes = d
+
+		return true, nil
+	})
+}
+
 func (p *MemberlistParams) SuspicionMult() int {
 	return p.suspicionMult
 }
@@ -233,6 +273,38 @@ func (p *MemberlistParams) SetExtraSameMemberLimit(d uint64) error {
 		}
 
 		p.extraSameMemberLimit = d
+
+		return true, nil
+	})
+}
+
+func (p *MemberlistParams) BroadcastTimerMult() int {
+	return p.broadcastTimerMult
+}
+
+func (p *MemberlistParams) SetBroadcastTimerMult(d int) error {
+	return p.SetOverZeroInt(d, func(d int) (bool, error) {
+		if p.broadcastTimerMult == d {
+			return false, nil
+		}
+
+		p.broadcastTimerMult = d
+
+		return true, nil
+	})
+}
+
+func (p *MemberlistParams) UserMsgLoopInterval() time.Duration {
+	return p.userMsgLoopInterval
+}
+
+func (p *MemberlistParams) SetUserMsgLoopInterval(d time.Duration) error {
+	return p.SetDuration(d, func(d time.Duration) (bool, error) {
+		if p.userMsgLoopInterval == d {
+			return false, nil
+		}
+
+		p.userMsgLoopInterval = d
 
 		return true, nil
 	})

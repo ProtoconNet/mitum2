@@ -77,17 +77,19 @@ func PMemberlist(pctx context.Context) (context.Context, error) {
 	args := quicmemberlist.NewMemberlistArgs(encs.JSON(), config)
 	args.ExtraSameMemberLimit = params.Memberlist.ExtraSameMemberLimit
 	args.FetchCallbackBroadcastMessageFunc = quicmemberlist.FetchCallbackBroadcastMessageFunc(
-		handlerPrefixMemberlistCallbackBroadcastMessage,
+		HandlerPrefixMemberlistCallbackBroadcastMessage,
 		headerdial,
 	)
 
 	args.PongEnsureBroadcastMessageFunc = quicmemberlist.PongEnsureBroadcastMessageFunc(
-		handlerPrefixMemberlistEnsureBroadcastMessage,
+		HandlerPrefixMemberlistEnsureBroadcastMessage,
 		local.Address(),
 		local.Privatekey(),
 		params.ISAAC.NetworkID(),
 		headerdial,
 	)
+	args.BroadcastTimerMult = params.Memberlist.broadcastTimerMult
+	args.UserMsgLoopInterval = params.Memberlist.userMsgLoopInterval
 
 	m, err := quicmemberlist.NewMemberlist(localnode, args)
 	if err != nil {
@@ -377,6 +379,8 @@ func memberlistConfig(
 		return nil, err
 	}
 
+	params := design.LocalParams.Memberlist
+
 	transport, err := memberlistTransport(pctx, connectionPool.Dial)
 	if err != nil {
 		return nil, err
@@ -384,7 +388,7 @@ func memberlistConfig(
 
 	delegate := quicmemberlist.NewDelegate(localnode, nil, func([]byte) {
 		panic("set notifyMsgFunc")
-	})
+	}, params.RetransmitMult())
 
 	alive, err := memberlistAlive(pctx)
 	if err != nil {
@@ -397,8 +401,6 @@ func memberlistConfig(
 		design.Network.Publish(),
 	)
 
-	params := design.LocalParams.Memberlist
-
 	config.TCPTimeout = params.TCPTimeout()
 	config.RetransmitMult = params.RetransmitMult()
 	config.ProbeTimeout = params.ProbeTimeout()
@@ -406,7 +408,7 @@ func memberlistConfig(
 	config.SuspicionMult = params.SuspicionMult()
 	config.SuspicionMaxTimeoutMult = params.SuspicionMaxTimeoutMult()
 	config.UDPBufferSize = params.UDPBufferSize()
-
+	config.GossipNodes = params.GosshipNodes()
 	config.Transport = transport
 	config.Delegate = delegate
 	config.Alive = alive
@@ -493,7 +495,7 @@ func memberlistTransport(
 		timeoutf = f
 	}
 
-	handler := rateLimitHandlerFunc(
+	handler := RateLimitHandlerFunc(
 		rateLimitHandler,
 		func(prefix quicstream.HandlerPrefix) (string, bool) {
 			s, found := NetworkHandlerPrefixMapRev[prefix]

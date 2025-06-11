@@ -109,10 +109,14 @@ type memberlistParamsMarshaler struct {
 	RetransmitMult          int                   `json:"retransmit_mult,omitempty" yaml:"retransmit_mult,omitempty"`
 	ProbeTimeout            util.ReadableDuration `json:"probe_timeout,omitempty" yaml:"probe_timeout,omitempty"`
 	ProbeInterval           util.ReadableDuration `json:"probe_interval,omitempty" yaml:"probe_interval,omitempty"`
+	GossipInterval          util.ReadableDuration `json:"gossip_interval,omitempty" yaml:"gossip_interval,omitempty"`
+	GosshipNodes            int                   `json:"gossip_nodes,omitempty" yaml:"gossip_nodes,omitempty"`
 	SuspicionMult           int                   `json:"suspicion_mult,omitempty" yaml:"suspicion_mult,omitempty"`
 	SuspicionMaxTimeoutMult int                   `json:"suspicion_max_timeout_mult,omitempty" yaml:"suspicion_max_timeout_mult,omitempty"`
 	UDPBufferSize           int                   `json:"udp_buffer_size,omitempty" yaml:"udp_buffer_size,omitempty"`
 	ExtraSameMemberLimit    uint64                `json:"extra_same_member_limit,omitempty" yaml:"extra_same_member_limit,omitempty"`
+	BroadcastTimerMult      int                   `json:"broadcast_timer_mult,omitempty" yaml:"broadcast_timer_mult,omitempty"`
+	UserMsgLoopInterval     util.ReadableDuration `json:"user_msg_loop_interval,omitempty" yaml:"user_msg_loop_interval,omitempty"`
 	//revive:enable:line-length-limit
 }
 
@@ -122,10 +126,14 @@ func (p *MemberlistParams) marshaler() memberlistParamsMarshaler {
 		RetransmitMult:          p.retransmitMult,
 		ProbeTimeout:            util.ReadableDuration(p.probeTimeout),
 		ProbeInterval:           util.ReadableDuration(p.probeInterval),
+		GossipInterval:          util.ReadableDuration(p.gossipInterval),
+		GosshipNodes:            p.gosshipNodes,
 		SuspicionMult:           p.suspicionMult,
 		SuspicionMaxTimeoutMult: p.suspicionMaxTimeoutMult,
 		UDPBufferSize:           p.udpBufferSize,
 		ExtraSameMemberLimit:    p.extraSameMemberLimit,
+		BroadcastTimerMult:      p.broadcastTimerMult,
+		UserMsgLoopInterval:     util.ReadableDuration(p.userMsgLoopInterval),
 	}
 }
 
@@ -143,10 +151,14 @@ type memberlistParamsUnmarshaler struct {
 	RetransmitMult          *int                   `json:"retransmit_mult,omitempty" yaml:"retransmit_mult,omitempty"`
 	ProbeTimeout            *util.ReadableDuration `json:"probe_timeout,omitempty" yaml:"probe_timeout,omitempty"`
 	ProbeInterval           *util.ReadableDuration `json:"probe_interval,omitempty" yaml:"probe_interval,omitempty"`
+	GossipInterval          *util.ReadableDuration `json:"gossip_interval,omitempty" yaml:"gossip_interval,omitempty"`
+	GosshipNodes            *int                   `json:"gossip_nodes,omitempty" yaml:"gossip_nodes,omitempty"`
 	SuspicionMult           *int                   `json:"suspicion_mult,omitempty" yaml:"suspicion_mult,omitempty"`
 	SuspicionMaxTimeoutMult *int                   `json:"suspicion_max_timeout_mult,omitempty" yaml:"suspicion_max_timeout_mult,omitempty"`
 	UDPBufferSize           *int                   `json:"udp_buffer_size,omitempty" yaml:"udp_buffer_size,omitempty"`
 	ExtraSameMemberLimit    *uint64                `json:"extra_same_member_limit,omitempty" yaml:"extra_same_member_limit,omitempty"`
+	BroadcastTimerMult      *int                   `json:"broadcast_timer_mult,omitempty" yaml:"broadcast_timer_mult,omitempty"`
+	UserMsgLoopInterval     *util.ReadableDuration `json:"user_msg_loop_interval,omitempty" yaml:"user_msg_loop_interval,omitempty"`
 	//revive:enable:line-length-limit
 }
 
@@ -201,10 +213,20 @@ func (p *MemberlistParams) unmarshal(u memberlistParamsUnmarshaler) error {
 		p.extraSameMemberLimit = *u.ExtraSameMemberLimit
 	}
 
+	if u.BroadcastTimerMult != nil {
+		p.broadcastTimerMult = *u.BroadcastTimerMult
+	}
+
+	if u.GosshipNodes != nil {
+		p.gosshipNodes = *u.GosshipNodes
+	}
+
 	durargs := [][2]interface{}{
 		{u.TCPTimeout, &p.tcpTimeout},
 		{u.ProbeTimeout, &p.probeTimeout},
 		{u.ProbeInterval, &p.probeInterval},
+		{u.GossipInterval, &p.gossipInterval},
+		{u.UserMsgLoopInterval, &p.userMsgLoopInterval},
 	}
 
 	for i := range durargs {

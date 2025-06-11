@@ -21,23 +21,26 @@ var (
 
 type ballotBroadcastTimers struct {
 	*sync.RWMutex
-	timers    *util.SimpleTimers
-	broadcast func(context.Context, base.Ballot) error
-	points    map[util.TimerID]base.StagePoint
-	interval  time.Duration
+	timers             *util.SimpleTimers
+	broadcast          func(context.Context, base.Ballot) error
+	points             map[util.TimerID]base.StagePoint
+	interval           time.Duration
+	broadcastTimerMult int
 }
 
 func newBallotBroadcastTimers(
 	timers *util.SimpleTimers,
 	broadcast func(context.Context, base.Ballot) error,
 	interval time.Duration,
+	broadcastTimerMult int,
 ) *ballotBroadcastTimers {
 	return &ballotBroadcastTimers{
-		RWMutex:   &sync.RWMutex{},
-		timers:    timers,
-		broadcast: broadcast,
-		points:    map[util.TimerID]base.StagePoint{},
-		interval:  interval,
+		RWMutex:            &sync.RWMutex{},
+		timers:             timers,
+		broadcast:          broadcast,
+		points:             map[util.TimerID]base.StagePoint{},
+		interval:           interval,
+		broadcastTimerMult: broadcastTimerMult,
 	}
 }
 
@@ -71,11 +74,12 @@ func (bbt *ballotBroadcastTimers) Clone() *ballotBroadcastTimers {
 	defer bbt.RUnlock()
 
 	return &ballotBroadcastTimers{
-		RWMutex:   bbt.RWMutex,
-		timers:    bbt.timers,
-		broadcast: bbt.broadcast,
-		points:    bbt.points,
-		interval:  bbt.interval,
+		RWMutex:            bbt.RWMutex,
+		timers:             bbt.timers,
+		broadcast:          bbt.broadcast,
+		points:             bbt.points,
+		interval:           bbt.interval,
+		broadcastTimerMult: bbt.broadcastTimerMult,
 	}
 }
 
@@ -165,7 +169,12 @@ func (bbt *ballotBroadcastTimers) addTimer(
 
 	if _, err := bbt.timers.New(
 		ti,
-		intervalf,
+		func(t uint64) time.Duration {
+			if strings.HasPrefix(ti.String(), "broadcast-init-ballot/") && !strings.Contains(ti.String(), "round=0") {
+				return time.Duration(bbt.broadcastTimerMult) * intervalf(t)
+			}
+			return intervalf(t)
+		},
 		func(ctx context.Context, _ uint64) (bool, error) {
 			return true, bbt.broadcast(ctx, bl)
 		},

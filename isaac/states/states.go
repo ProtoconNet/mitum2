@@ -33,6 +33,7 @@ type StatesArgs struct {
 	BallotBroadcaster       BallotBroadcaster
 	WhenStateSwitchedFunc   func(StateType)
 	IntervalBroadcastBallot func() time.Duration
+	BroadcastTimerMult      func() int
 	WhenNewVoteproof        func(base.Voteproof)
 	NewHandoverXBroker      NewHandoverXBrokerFunc
 	NewHandoverYBroker      NewHandoverYBrokerFunc
@@ -54,6 +55,9 @@ func NewStatesArgs() *StatesArgs {
 		},
 		IntervalBroadcastBallot: func() time.Duration {
 			return isaac.DefaultntervalBroadcastBallot
+		},
+		BroadcastTimerMult: func() int {
+			return isaac.DefaultBroadcastTimerMult
 		},
 		WhenNewVoteproof: func(base.Voteproof) {},
 	}
@@ -106,6 +110,7 @@ func NewStates(networkID base.NetworkID, local base.LocalNode, args *StatesArgs)
 			return nil
 		},
 		st.args.IntervalBroadcastBallot(),
+		st.args.BroadcastTimerMult(),
 	)
 
 	if st.args.Ballotbox != nil {

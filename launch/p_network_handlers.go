@@ -37,8 +37,8 @@ var (
 	HandlerNameMemberlistCallbackBroadcastMessage quicstream.HandlerName = "memberlist_callback_broadcast_message"
 	HandlerNameMemberlistEnsureBroadcastMessage   quicstream.HandlerName = "memberlist_ensure_broadcast_message"
 
-	handlerPrefixMemberlistCallbackBroadcastMessage = quicstream.HashPrefix(HandlerNameMemberlistCallbackBroadcastMessage)
-	handlerPrefixMemberlistEnsureBroadcastMessage   = quicstream.HashPrefix(HandlerNameMemberlistEnsureBroadcastMessage)
+	HandlerPrefixMemberlistCallbackBroadcastMessage = quicstream.HashPrefix(HandlerNameMemberlistCallbackBroadcastMessage)
+	HandlerPrefixMemberlistEnsureBroadcastMessage   = quicstream.HashPrefix(HandlerNameMemberlistEnsureBroadcastMessage)
 	//revive:enable:line-length-limit
 )
 

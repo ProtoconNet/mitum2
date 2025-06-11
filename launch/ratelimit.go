@@ -1139,7 +1139,7 @@ func humanizeRateLimiter(limit rate.Limit, burst int) string {
 	}
 }
 
-func rateLimitHandlerFunc(
+func RateLimitHandlerFunc(
 	ratelimiter *RateLimitHandler,
 	findPrefix func(quicstream.HandlerPrefix) (string, bool),
 ) func(quicstream.Handler) quicstream.Handler {

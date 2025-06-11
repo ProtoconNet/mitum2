@@ -20,6 +20,7 @@ var (
 	DefaultMinWaitNextBlockINITBallot = time.Second * 2
 	DefaultStateCacheSize             = 1 << 12
 	DefaultOperationPoolCacheSize     = 1 << 12
+	DefaultBroadcastTimerMult         = 5
 )
 
 type Params struct {

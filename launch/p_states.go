@@ -146,6 +146,7 @@ func PStates(pctx context.Context) (context.Context, error) {
 	var pool *isaacdatabase.TempPool
 	var m *quicmemberlist.Memberlist
 	var nodeinfo *isaacnetwork.NodeInfoUpdater
+	var design NodeDesign
 
 	if err := util.LoadFromContextOK(pctx,
 		LoggingContextKey, &log,
@@ -160,12 +161,16 @@ func PStates(pctx context.Context) (context.Context, error) {
 		PoolDatabaseContextKey, &pool,
 		MemberlistContextKey, &m,
 		NodeInfoContextKey, &nodeinfo,
+		DesignContextKey, &design,
 	); err != nil {
 		return pctx, e.Wrap(err)
 	}
 
 	args.IntervalBroadcastBallot = isaacparams.IntervalBroadcastBallot
 	args.AllowConsensus = devflags.AllowConsensus
+	args.BroadcastTimerMult = func() int {
+		return design.LocalParams.Memberlist.broadcastTimerMult
+	}
 
 	if vp := args.LastVoteproofsHandler.Last().Cap(); vp != nil {
 		last := args.Ballotbox.LastPoint()
