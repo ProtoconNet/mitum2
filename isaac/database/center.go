@@ -777,34 +777,65 @@ func (db *Center) cleanRemoved(limit int) error {
 
 func loadTemp(
 	st *leveldbstorage.Storage,
-	height base.Height,
+	h base.Height,
 	encs *encoder.Encoders,
 	enc encoder.Encoder,
 ) (isaac.TempDatabase, error) {
+
 	r := &leveldbutil.Range{
-		Start: emptyPrefixStoragePrefixByHeight(leveldbLabelBlockWrite, height),   //nolint:gomnd //...
-		Limit: emptyPrefixStoragePrefixByHeight(leveldbLabelBlockWrite, height+1), //nolint:gomnd //...
+		Start: emptyPrefixStoragePrefixByHeight(leveldbLabelBlockWrite, h),
+		Limit: emptyPrefixStoragePrefixByHeight(leveldbLabelBlockWrite, h+1),
 	}
 
-	var lastprefix []byte
-	var prefixes [][]byte
+	const delBufCap = 128
+	var delBuf = make([][]byte, 0, delBufCap)
+
+	flushDeletes := func() error {
+		if len(delBuf) == 0 {
+			return nil
+		}
+		for _, p := range delBuf {
+			if err := leveldbstorage.RemoveByPrefix(st, p); err != nil {
+				return err
+			}
+		}
+		delBuf = delBuf[:0]
+		return nil
+	}
+
+	var lastPrefix []byte
+	var found isaac.TempDatabase
 
 	if err := st.Iter(
 		r,
-		func(key, _ []byte) (bool, error) {
-			k, err := prefixStoragePrefixFromKey(key)
+		func(k, _ []byte) (bool, error) {
+			prefix, err := prefixStoragePrefixFromKey(k)
+			if err != nil || bytes.Equal(prefix, lastPrefix) {
+				return true, nil
+			}
+			lastPrefix = prefix
+
+			if found != nil {
+				delBuf = append(delBuf, prefix)
+				if len(delBuf) >= delBufCap {
+					return false, flushDeletes()
+				}
+				return true, nil
+			}
+
+			temp, err := NewTempLeveldbFromPrefix(st, prefix, encs, enc)
 			if err != nil {
+				delBuf = append(delBuf, prefix)
 				return true, nil
 			}
 
-			if bytes.Equal(k, lastprefix) {
+			isMerged, err := temp.isMerged()
+			if err != nil || !isMerged {
+				delBuf = append(delBuf, prefix)
 				return true, nil
 			}
 
-			lastprefix = k
-
-			prefixes = append(prefixes, k)
-
+			found = temp
 			return true, nil
 		},
 		false,
@@ -812,50 +843,8 @@ func loadTemp(
 		return nil, err
 	}
 
-	if len(prefixes) < 1 {
-		return nil, nil
-	}
-
-	var useless [][]byte
-
-	var found isaac.TempDatabase
-
-	for i := range prefixes {
-		prefix := prefixes[i]
-
-		if found != nil {
-			useless = append(useless, prefix)
-
-			continue
-		}
-
-		temp, err := NewTempLeveldbFromPrefix(st, prefix, encs, enc)
-		if err != nil {
-			useless = append(useless, prefix)
-
-			continue
-		}
-
-		switch ismerged, err := temp.isMerged(); {
-		case err != nil:
-			useless = append(useless, prefix)
-
-			continue
-		case !ismerged:
-			useless = append(useless, prefix)
-
-			continue
-		default:
-			found = temp
-		}
-	}
-
-	if len(useless) > 0 {
-		for i := range useless {
-			if err := leveldbstorage.RemoveByPrefix(st, useless[i]); err != nil {
-				return nil, err
-			}
-		}
+	if err := flushDeletes(); err != nil {
+		return nil, err
 	}
 
 	return found, nil

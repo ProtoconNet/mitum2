@@ -982,74 +982,90 @@ func (db *TempPool) cleanByHeight(
 	deep int,
 	keyf func(*leveldbstorage.PrefixStorageBatch, []byte, []byte),
 ) (int, error) {
+
 	pst, err := db.st()
 	if err != nil {
 		return 0, err
 	}
 
-	top := base.NilHeight
-
-	var keys [][3]interface{}
-
-	_ = pst.Iter(
+	var top base.Height
+	err = pst.Iter(
 		leveldbutil.BytesPrefix(prefix[:]),
-		func(key, b []byte) (bool, error) {
-			i, err := heightFromKey(key, prefix)
-			if err != nil {
-				keys = append(keys, [3]interface{}{key, b, nil})
-
-				return true, nil
+		func(k, _ []byte) (bool, error) {
+			h, e := heightFromKey(k, prefix)
+			if e != nil {
+				return false, e
 			}
-
-			if i > top {
-				top = i
-			}
-
-			keys = append(keys, [3]interface{}{key, b, i})
-
-			return true, nil
+			top = h
+			return false, nil
 		},
 		false,
 	)
-
-	height := top
-
-	switch {
-	case len(keys) < 1:
+	if err != nil {
+		return 0, err
+	}
+	if top == base.NilHeight {
 		return 0, nil
-	case top-3 < base.GenesisHeight:
-		return 0, nil
-	default:
-		for range make([]int, deep) {
-			height = height.SafePrev()
+	}
+
+	cutoff := top
+	for i := 0; i < deep; i++ {
+		cutoff = cutoff.SafePrev()
+		if cutoff < base.GenesisHeight {
+			return 0, nil
 		}
 	}
+
+	const recLimit = 10_000   // Record count threshold (tunable)
+	const byteLimit = 4 << 20 // 4MiB threshold (tunable)
 
 	batch := pst.NewBatch()
 	defer batch.Reset()
 
-	var removed int
+	var removed, recCnt, byteCnt int
 
-	for i := range keys {
-		key, b, j := keys[i][0].([]byte), keys[i][1].([]byte), keys[i][2] //nolint:forcetypeassert //...
-		if j != nil && j.(base.Height) > height {                         //nolint:forcetypeassert //...
-			continue
-		}
+	err = pst.Iter(
+		leveldbutil.BytesPrefix(prefix[:]),
+		func(k, v []byte) (bool, error) {
 
-		batch.Delete(key)
+			h, e := heightFromKey(k, prefix)
+			if e != nil || h > cutoff {
+				return true, e
+			}
 
-		if keyf != nil {
-			keyf(batch, key, b)
-		}
+			batch.Delete(k)
 
-		removed++
+			if keyf != nil {
+				keyf(batch, k, v)
+			}
+
+			recCnt++
+			byteCnt += len(k) + len(v)
+
+			if recCnt >= recLimit || byteCnt >= byteLimit {
+				if err := pst.Batch(batch, nil); err != nil {
+					return false, err
+				}
+				removed += recCnt
+				batch.Reset()
+				recCnt, byteCnt = 0, 0
+			}
+			return true, nil
+		},
+		true,
+	)
+	if err != nil {
+		return removed, err
 	}
 
-	if batch.Len() < 1 {
-		return removed, nil
+	if recCnt > 0 {
+		if err := pst.Batch(batch, nil); err != nil {
+			return removed, err
+		}
+		removed += recCnt
 	}
 
-	return removed, pst.Batch(batch, nil)
+	return removed, nil
 }
 
 func (db *TempPool) opFromCache(h util.Hash) (base.Operation, bool) {

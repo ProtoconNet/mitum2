@@ -1,7 +1,6 @@
 package leveldbstorage
 
 import (
-	"bytes"
 	"context"
 	"sync"
 
@@ -106,47 +105,32 @@ func (st *Storage) Exists(key []byte) (bool, error) {
 
 func (st *Storage) Iter(
 	r *leveldbutil.Range,
-	callback func(key []byte, raw []byte) (bool, error),
-	sort bool, // NOTE if true, ascend order
+	callback func(key, val []byte) (bool, error),
+	ascend bool,
 ) error {
 	db, err := st.db()
 	if err != nil {
 		return err
 	}
-
 	iter := db.NewIterator(r, nil)
 	defer iter.Release()
 
-	var seek func() bool
-	var next func() bool
-	if sort {
-		seek = iter.First
-		next = iter.Next
-	} else {
-		seek = iter.Last
-		next = iter.Prev
+	seek, next := iter.Last, iter.Prev
+	if ascend {
+		seek, next = iter.First, iter.Next
 	}
-
-	if !seek() {
-		return nil
-	}
-
-end:
-	for {
-		switch keep, err := callback(bytes.Clone(iter.Key()), bytes.Clone(iter.Value())); {
-		case err != nil:
+	for ok := seek(); ok; ok = next() {
+		keep, err := callback(iter.Key(), iter.Value())
+		if err != nil {
 			return err
-		case !keep:
-			break end
-		case !next():
-			break end
+		}
+		if !keep {
+			break
 		}
 	}
-
 	if err := iter.Error(); err != nil {
 		return storage.ErrExec.Errorf("iter")
 	}
-
 	return nil
 }
 
@@ -315,31 +299,30 @@ func BatchRemove(st *Storage, r *leveldbutil.Range, limit int) (int, error) {
 		return 0, err
 	}
 
-	var removed int
-
-	var batch leveldb.Batch
+	var (
+		removed int
+		batch   leveldb.Batch
+	)
 	defer batch.Reset()
 
 	if r == nil {
 		r = &leveldbutil.Range{}
 	}
-
 	start := r.Start
 
 	for {
 		r.Start = start
+		var nextStart []byte
 
 		if err := st.Iter(
 			r,
 			func(key, _ []byte) (bool, error) {
 				if batch.Len() == limit {
-					start = key
-
+					// Copy the key only for one moment when the limit is reached
+					nextStart = append(nextStart[:0], key...)
 					return false, nil
 				}
-
 				batch.Delete(key)
-
 				return true, nil
 			},
 			true,
@@ -347,19 +330,20 @@ func BatchRemove(st *Storage, r *leveldbutil.Range, limit int) (int, error) {
 			return removed, err
 		}
 
-		if batch.Len() < 1 {
+		if batch.Len() == 0 {
 			break
 		}
-
 		if err := st.Batch(&batch, nil); err != nil {
 			return removed, err
 		}
-
 		removed += batch.Len()
-
 		batch.Reset()
-	}
 
+		if nextStart == nil {
+			break
+		}
+		start = nextStart
+	}
 	return removed, nil
 }
 

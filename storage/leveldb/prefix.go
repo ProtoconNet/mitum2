@@ -226,19 +226,35 @@ func (b *PrefixStorageBatch) LBatch() *leveldb.Batch {
 }
 
 func RemoveByPrefix(st *Storage, prefix []byte) error {
+	const batchLimit = 10_000
+
 	var batch leveldb.Batch
+	flush := func() error {
+		if batch.Len() == 0 {
+			return nil
+		}
+		if err := st.Batch(&batch, nil); err != nil {
+			return err
+		}
+		batch.Reset()
+		return nil
+	}
 
 	if err := st.Iter(
 		leveldbutil.BytesPrefix(prefix),
-		func(key, _ []byte) (bool, error) {
-			batch.Delete(key)
-
+		func(k, _ []byte) (bool, error) {
+			batch.Delete(k)
+			if batch.Len() >= batchLimit {
+				if err := flush(); err != nil {
+					return false, err
+				}
+			}
 			return true, nil
 		},
 		true,
 	); err != nil {
-		return errors.Errorf("remove prefix storage")
+		return errors.Errorf("remove prefix storage: %w", err)
 	}
 
-	return st.Batch(&batch, nil)
+	return flush()
 }
