@@ -93,7 +93,7 @@ func QuicstreamHandlerSendOperation(
 		case err != nil:
 			return ctx, e.Wrap(err)
 		case uint64(len(i)) > max:
-			return ctx, e.Errorf("too big size; >= %d", max)
+			return ctx, e.Errorf("too big size; %d >= %d, max message size", uint64(len(i)), max)
 		default:
 			if err = encoder.Decode(broker.Encoder, i, &op); err != nil {
 				return ctx, e.Wrap(err)
@@ -594,7 +594,7 @@ func QuicstreamHandlerSendBallots(
 		case err != nil:
 			return ctx, e.Wrap(err)
 		case uint64(len(body)) > max:
-			return ctx, e.Errorf("too big size; >= %d", max)
+			return ctx, e.Errorf("too big size; %d >= %d, max message size", uint64(len(body)), max)
 		default:
 			body = i
 		}
