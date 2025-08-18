@@ -965,30 +965,23 @@ func (srv *Memberlist) handleUserMsgs(ctx context.Context, sem *semaphore.Weight
 
 		addBS, doneBS := util.CompactAppendSlice[[]byte](int(maxHandleUserMsg))
 
-		var elem *list.Element
+		for elem := srv.usermsgs.Front(); elem != nil; {
+			next := elem.Next()
 
-	end:
-		for {
-			switch {
-			case elem == nil:
-				elem = srv.usermsgs.Front()
-			default:
-				elem = elem.Next()
-			}
-
-			if elem == nil {
-				return doneBS()
+			val, ok := elem.Value.([]byte)
+			if !ok || len(val) < 1 {
+				elem = next
+				continue
 			}
 
 			srv.usermsgs.Remove(elem)
 
-			switch b, ok := elem.Value.([]byte); {
-			case !ok, len(b) < 1:
-				continue end
-			case addBS(b):
+			if addBS(val) {
 				return doneBS()
 			}
+			elem = next
 		}
+		return doneBS()
 	}()
 
 	if len(bs) < 1 {
@@ -1004,7 +997,6 @@ func (srv *Memberlist) handleUserMsgs(ctx context.Context, sem *semaphore.Weight
 
 		go func() {
 			defer sem.Release(1)
-
 			srv.handleUserMsg(b)
 		}()
 	}
