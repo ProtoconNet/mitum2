@@ -96,33 +96,25 @@ func EnsureRead(ctx context.Context, r io.Reader, b []byte) (n uint64, _ error) 
 		return 0, nil
 	}
 
-	readch := make(chan [3]interface{})
-
-	read := func() {
-		l := make([]byte, uint64(len(b))-n)
-
-		i, err := r.Read(l)
-
-		readch <- [3]interface{}{i, err, l[:i]}
+	type result struct {
+		i int
+		e error
 	}
+	readch := make(chan result)
 
-	go read()
-
-	for {
+	for n < uint64(len(b)) {
+		go func(dst []byte) {
+			i, err := r.Read(dst)
+			select {
+			case readch <- result{i, err}:
+			case <-ctx.Done():
+			}
+		}(b[n:])
 		select {
 		case <-ctx.Done():
 			return n, errors.WithStack(ctx.Err())
-		case j, notclosed := <-readch:
-			if !notclosed {
-				return n, errors.Errorf("readch closed")
-			}
-
-			var err error
-			if e, ok := j[1].(error); ok {
-				err = e
-			}
-
-			i := j[0].(int) //nolint:forcetypeassert //...
+		case res := <-readch:
+			i, err := res.i, res.e
 			iseof := errors.Is(err, io.EOF)
 
 			if err != nil && !iseof {
@@ -130,12 +122,7 @@ func EnsureRead(ctx context.Context, r io.Reader, b []byte) (n uint64, _ error) 
 
 				return n, errors.WithStack(err)
 			}
-
-			l := j[2].([]byte) //nolint:forcetypeassert //...
-
 			if i > 0 {
-				copy(b[n:], l)
-
 				n += uint64(i)
 			}
 
@@ -144,11 +131,10 @@ func EnsureRead(ctx context.Context, r io.Reader, b []byte) (n uint64, _ error) 
 				return n, errors.WithStack(err)
 			case iseof:
 				return n, errors.Errorf("insufficient read")
-			default:
-				go read()
 			}
 		}
 	}
+	return
 }
 
 func EnsureWrite(w io.Writer, b []byte) (int, error) {
