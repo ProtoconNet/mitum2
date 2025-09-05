@@ -142,6 +142,21 @@ func (l *LastVoteproofsHandler) Set(vp base.Voteproof) bool {
 
 	lvps := l.last
 
+	if lvps.ivp == nil && lvps.avp == nil {
+		if vp.Point().Stage() != base.StageINIT || vp.Majority() == nil {
+
+			return false
+		}
+	}
+	if lvps.ivp != nil && lvps.avp == nil {
+		if lvp := lvps.Cap(); lvp != nil {
+			if !lvp.Point().Point.Equal(vp.Point().Point) {
+
+				return false
+			}
+		}
+	}
+
 	if lvp := lvps.Cap(); lvp != nil {
 		lp, err := NewLastPointFromVoteproof(lvp)
 		if err != nil {
