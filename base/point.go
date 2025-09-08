@@ -36,7 +36,7 @@ func ParseHeightString(s string) (Height, error) {
 
 	i, err := strconv.ParseInt(n, 10, 64)
 	if err != nil {
-		return NilHeight, errors.Wrap(err, "seHeightString")
+		return NilHeight, errors.Wrap(err, "ParseHeightString")
 	}
 
 	return Height(i), nil
@@ -45,7 +45,7 @@ func ParseHeightString(s string) (Height, error) {
 func ParseHeightBytes(b []byte) (Height, error) {
 	i, err := util.BigBytesToInt64(b)
 	if err != nil {
-		return NilHeight, errors.Wrap(err, "seHeightBytes")
+		return NilHeight, errors.Wrap(err, "ParseHeightBytes")
 	}
 
 	return Height(i), nil
