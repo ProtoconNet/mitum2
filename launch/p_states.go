@@ -718,6 +718,7 @@ func newSyncerArgsFunc(pctx context.Context) (func(base.Height) (isaacstates.Syn
 		args = isaacstates.NewSyncerArgs()
 		args.LastBlockMapFunc = syncerLastBlockMapFunc(client, isaacparams, syncSourcePool)
 		args.LastBlockMapTimeout = params.Network.TimeoutRequest()
+		args.LastBlockMapInterval = isaacparams.SyncerLastBlockMapInterval()
 		args.BlockMapFunc = syncerBlockMapFunc(log, client, params, syncSourcePool, conninfocache, devflags.DelaySyncer)
 		args.TempSyncPool = tempsyncpool
 		args.WhenStoppedFunc = func() error {

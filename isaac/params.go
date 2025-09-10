@@ -18,6 +18,7 @@ var (
 	DefaultWaitStuckInterval          = time.Second * 33
 	DefaultTimeoutRequest             = time.Second * 3
 	DefaultMinWaitNextBlockINITBallot = time.Second * 2
+	DefaultSyncerLastBlockMapInterval = time.Second * 2
 	DefaultStateCacheSize             = 1 << 12
 	DefaultOperationPoolCacheSize     = 1 << 12
 	DefaultBroadcastTimerMult         = 5
@@ -33,6 +34,7 @@ type Params struct {
 	ballotStuckWait               time.Duration
 	ballotStuckResolveAfter       time.Duration
 	minWaitNextBlockINITBallot    time.Duration
+	syncerLastBlockMapInterval    time.Duration
 	maxTryHandoverYBrokerSyncData uint64
 	stateCacheSize                int
 	operationPoolCacheSize        int
@@ -56,7 +58,8 @@ func DefaultParams(networkID base.NetworkID) *Params {
 		waitPreparingINITBallot:       DefaultWaitPreparingINITBallot,
 		ballotStuckWait:               time.Second * 33, //nolint:gomnd // waitPreparingINITBallot * 10
 		ballotStuckResolveAfter:       time.Second * 66, //nolint:gomnd // ballotStuckWait * 2
-		maxTryHandoverYBrokerSyncData: 33,               //nolint:gomnd //...
+		syncerLastBlockMapInterval:    DefaultSyncerLastBlockMapInterval,
+		maxTryHandoverYBrokerSyncData: 33, //nolint:gomnd //...
 		minWaitNextBlockINITBallot:    DefaultMinWaitNextBlockINITBallot,
 		stateCacheSize:                DefaultStateCacheSize,
 		operationPoolCacheSize:        DefaultOperationPoolCacheSize,
@@ -100,6 +103,10 @@ func (p *Params) IsValid(networkID []byte) error {
 
 	if p.minWaitNextBlockINITBallot < 0 {
 		return e.Errorf("wrong duration; invalid minWaitNextBlockINITBallot")
+	}
+
+	if p.syncerLastBlockMapInterval < 0 {
+		return e.Errorf("wrong duration; invalid syncerLastBlockMapInterval")
 	}
 
 	if p.stateCacheSize < 0 {
@@ -238,6 +245,25 @@ func (p *Params) SetBallotStuckResolveAfter(d time.Duration) error {
 	})
 }
 
+func (p *Params) SyncerLastBlockMapInterval() time.Duration {
+	p.RLock()
+	defer p.RUnlock()
+
+	return p.syncerLastBlockMapInterval
+}
+
+func (p *Params) SetSyncerLastBlockMapInterval(d time.Duration) error {
+	return p.SetDuration(d, func(d time.Duration) (bool, error) {
+		if p.syncerLastBlockMapInterval == d {
+			return false, nil
+		}
+
+		p.syncerLastBlockMapInterval = d
+
+		return true, nil
+	})
+}
+
 func (p *Params) MaxTryHandoverYBrokerSyncData() uint64 {
 	p.RLock()
 	defer p.RUnlock()
@@ -332,6 +358,7 @@ type paramsJSONMarshaler struct {
 	BallotStuckWait               util.ReadableDuration `json:"ballot_stuck_wait,omitempty"`
 	BallotStuckResolveAfter       util.ReadableDuration `json:"ballot_stuck_resolve_after,omitempty"`
 	MinWaitNextBlockINITBallot    util.ReadableDuration `json:"min_wait_next_block_init_ballot,omitempty"`
+	SyncerLastBlockMapInterval    util.ReadableDuration `json:"syncer_last_block_map_interval,omitempty"`
 	MaxTryHandoverYBrokerSyncData uint64                `json:"max_try_handover_y_broker_sync_data,omitempty"`
 	StateCacheSize                int                   `json:"state_cache_size,omitempty"`
 	OperationPoolCacheSize        int                   `json:"operation_pool_cache_size,omitempty"`
@@ -347,6 +374,7 @@ func (p *Params) MarshalJSON() ([]byte, error) {
 		BallotStuckResolveAfter:       util.ReadableDuration(p.ballotStuckResolveAfter),
 		BallotStuckWait:               util.ReadableDuration(p.ballotStuckWait),
 		MinWaitNextBlockINITBallot:    util.ReadableDuration(p.minWaitNextBlockINITBallot),
+		SyncerLastBlockMapInterval:    util.ReadableDuration(p.syncerLastBlockMapInterval),
 		MaxTryHandoverYBrokerSyncData: p.maxTryHandoverYBrokerSyncData,
 		StateCacheSize:                p.stateCacheSize,
 		OperationPoolCacheSize:        p.operationPoolCacheSize,
@@ -361,6 +389,7 @@ type paramsJSONUnmarshaler struct {
 	BallotStuckWait               *util.ReadableDuration `json:"ballot_stuck_wait,omitempty"`
 	BallotStuckResolveAfter       *util.ReadableDuration `json:"ballot_stuck_resolve_after,omitempty"`
 	MinWaitNextBlockINITBallot    *util.ReadableDuration `json:"min_wait_next_block_init_ballot,omitempty"`
+	SyncerLastBlockMapInterval    *util.ReadableDuration `json:"syncer_last_block_map_interval,omitempty"`
 	MaxTryHandoverYBrokerSyncData *uint64                `json:"max_try_handover_y_broker_sync_data,omitempty"`
 	StateCacheSize                *int                   `json:"state_cache_size,omitempty"`
 	OperationPoolCacheSize        *int                   `json:"operation_pool_cache_size,omitempty"`
@@ -395,6 +424,7 @@ func (p *Params) UnmarshalJSON(b []byte) error {
 		{u.BallotStuckResolveAfter, &p.ballotStuckResolveAfter},
 		{u.BallotStuckWait, &p.ballotStuckWait},
 		{u.MinWaitNextBlockINITBallot, &p.minWaitNextBlockINITBallot},
+		{u.SyncerLastBlockMapInterval, &p.syncerLastBlockMapInterval},
 	}
 
 	for i := range durargs {
