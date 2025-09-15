@@ -280,25 +280,24 @@ func (db *TempPool) OperationHashes(
 	}
 
 	ops := make([][2]util.Hash, limit)
-	removeordereds := make([][]byte, limit)
-	removeops := make([]util.Hash, limit)
+	removeOrdered := make([][]byte, limit)
+	removeOps := make([]util.Hash, limit)
 
-	var opsindex uint64
-	var removeorderedsindex, removeopsindex uint64
-
-	facts := map[string]uint64{}
+	facts := make(map[string]struct{})
 	defer func() {
 		clear(facts)
 		facts = nil
 	}()
 
+	var opsindex uint64
+	var removeOrderedIndex, removeOpsIndex uint64
 	if err := pst.Iter(
 		leveldbutil.BytesPrefix(leveldbKeyPrefixNewOperationOrdered[:]),
 		func(k []byte, b []byte) (bool, error) {
 			meta, err := ReadFrameHeaderOperation(b)
 			if err != nil {
-				removeordereds[removeorderedsindex] = k
-				removeorderedsindex++
+				removeOrdered[removeOrderedIndex] = k
+				removeOrderedIndex++
 
 				return true, nil
 			}
@@ -307,35 +306,28 @@ func (db *TempPool) OperationHashes(
 			case err != nil:
 				return false, err
 			case !ok:
-				removeops[removeopsindex] = meta.Operation()
-				removeopsindex++
+				removeOps[removeOpsIndex] = meta.Operation()
+				removeOpsIndex++
 
-				if removeopsindex == limit {
+				if removeOpsIndex == limit {
 					return false, nil
 				}
 
 				return true, nil
 			}
 
-			// NOTE filter duplicated fact; last one will be selected
-			if prev, found := facts[meta.Fact().String()]; found {
-				removeops[removeopsindex] = meta.Operation()
-				removeopsindex++
+			if _, found := facts[meta.Fact().String()]; found {
 
-				nops := make([][2]util.Hash, len(ops))
-				copy(nops, ops[:prev])
-				copy(nops[prev:], ops[prev+1:])
-
-				ops = nops
-
-				opsindex--
+				return true, nil
+			} else {
+				facts[meta.Fact().String()] = struct{}{}
+				ops[opsindex] = [2]util.Hash{meta.Operation(), meta.Fact()}
+				removeOps[removeOpsIndex] = meta.Operation()
+				removeOpsIndex++
+				opsindex++
 			}
 
-			ops[opsindex] = [2]util.Hash{meta.Operation(), meta.Fact()}
-			facts[meta.Fact().String()] = opsindex
-			opsindex++
-
-			if opsindex == limit {
+			if removeOpsIndex == limit || opsindex == limit {
 				return false, nil
 			}
 
@@ -346,11 +338,11 @@ func (db *TempPool) OperationHashes(
 		return nil, e.Wrap(err)
 	}
 
-	if err := db.removeNewOperationOrdereds(removeordereds[:removeorderedsindex]); err != nil {
+	if err := db.removeNewOperationOrdereds(removeOrdered[:removeOrderedIndex]); err != nil {
 		return nil, e.Wrap(err)
 	}
 
-	if err := db.setRemoveNewOperations(ctx, height, removeops[:removeopsindex]); err != nil {
+	if err := db.setRemoveNewOperations(ctx, height, removeOps[:removeOpsIndex]); err != nil {
 		return nil, e.Wrap(err)
 	}
 
