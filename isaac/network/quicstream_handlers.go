@@ -26,8 +26,8 @@ var ContextKeyNodeChallengedNode = util.ContextKey("node-challenge-node")
 func QuicstreamHandlerOperation(
 	oppool isaac.NewOperationPool,
 	getFromHandoverX func(context.Context, OperationRequestHeader) (
-		enchint string, body []byte, found bool, _ error,
-	),
+	enchint string, body []byte, found bool, _ error,
+),
 ) quicstreamheader.Handler[OperationRequestHeader] {
 	if getFromHandoverX == nil {
 		getFromHandoverX = func(context.Context, OperationRequestHeader) ( //revive:disable-line:modifies-parameter
@@ -147,9 +147,6 @@ func QuicstreamHandlerRequestProposal(
 		base.ProposalSignFact, error,
 	) {
 		proposer := header.Proposer()
-		if !proposer.Equal(local) {
-			return nil, nil
-		}
 
 		point := header.point
 		previousBlock := header.PreviousBlock()
@@ -294,10 +291,10 @@ func QuicstreamHandlerBlockMap(
 
 func QuicstreamHandlerBlockItem(
 	blockItemf func(
-		base.Height,
-		base.BlockItemType,
-		func(_ io.Reader, found bool, uri url.URL, compressFormat string) error,
-	) error,
+	base.Height,
+	base.BlockItemType,
+	func(_ io.Reader, found bool, uri url.URL, compressFormat string) error,
+) error,
 ) quicstreamheader.Handler[BlockItemRequestHeader] {
 	return func(ctx context.Context, _ net.Addr,
 		broker *quicstreamheader.HandlerBroker, header BlockItemRequestHeader,
@@ -338,9 +335,9 @@ func QuicstreamHandlerBlockItem(
 
 func QuicstreamHandlerBlockItemFiles(
 	blockItemFilesf func(
-		base.Height,
-		func(_ io.Reader, found bool) error,
-	) error,
+	base.Height,
+	func(_ io.Reader, found bool) error,
+) error,
 ) quicstreamheader.Handler[BlockItemFilesRequestHeader] {
 	return func(ctx context.Context, _ net.Addr,
 		broker *quicstreamheader.HandlerBroker, header BlockItemFilesRequestHeader,
@@ -634,10 +631,10 @@ func QuicstreamHandlerStreamOperations(
 	networkID base.NetworkID,
 	limit uint64,
 	traverse func(
-		_ context.Context,
-		offset []byte,
-		callback func(enchint string, meta isaacdatabase.FrameHeaderPoolOperation, body, offset []byte) (bool, error),
-	) error,
+	_ context.Context,
+	offset []byte,
+	callback func(enchint string, meta isaacdatabase.FrameHeaderPoolOperation, body, offset []byte) (bool, error),
+) error,
 ) quicstreamheader.Handler[StreamOperationsHeader] {
 	return func(ctx context.Context, addr net.Addr,
 		broker *quicstreamheader.HandlerBroker, header StreamOperationsHeader,
