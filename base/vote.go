@@ -1,9 +1,5 @@
 package base
 
-import (
-	"sort"
-)
-
 type VoteResult string
 
 const (
@@ -47,86 +43,56 @@ func (v *VoteResult) UnmarshalText(b []byte) error {
 	return nil
 }
 
-// FindMajority finds the majority(over threshold) set between the given sets.
-// The returned value means,
-// 0-N: index number of set
-// -1: not yet majority
-// -2: draw
-func FindMajority(quorum, threshold uint, set ...uint) int {
-	th := threshold
-	if th > quorum {
-		th = quorum
-	}
-
-	if len(set) < 1 {
-		return -1
-	}
-
-	var sum uint
-
-	for i := range set {
-		n := set[i]
-
-		if n >= quorum {
-			return i
-		}
-
-		if n >= th {
-			return i
-		}
-
-		sum += n
-	}
-
-	sort.Slice(set, func(i, j int) bool {
-		return set[i] > set[j]
-	})
-
-	if quorum-sum+set[0] < th {
-		return -2
-	}
-
-	return -1
-}
-
 func FindVoteResult(quorum, threshold uint, s []string) (result VoteResult, key string) {
 	th := threshold
 	if th > quorum {
 		th = quorum
 	}
 
-	if len(s) < 1 {
+	total := uint(len(s))
+	if total == 0 {
 		return VoteResultNotYet, ""
 	}
 
-	keys := map[uint]string{}
-	defer clear(keys)
-
-	count := map[string]uint{}
-	defer clear(count)
-
-	for i := range s {
-		count[s[i]]++
+	var remain uint
+	if total < quorum {
+		remain = quorum - total
 	}
 
-	set := make([]uint, len(count))
-	var i int
-
-	for j := range count {
-		c := count[j]
-		keys[c] = j
-		set[i] = c
-		i++
+	count := make(map[string]uint, len(s))
+	for _, v := range s {
+		count[v]++
 	}
 
-	sort.Slice(set, func(i, j int) bool { return set[i] > set[j] })
+	var (
+		maxCount uint
+		topTies  uint
+		mhs      string
+	)
+	for hs, cn := range count {
+		if cn > maxCount {
+			maxCount = cn
+			mhs = hs
+			topTies = 1
+		} else if cn == maxCount {
+			topTies++
+			if hs < mhs {
+				mhs = hs
+			}
+		}
+	}
 
-	switch index := FindMajority(quorum, th, set...); index {
-	case -1:
-		return VoteResultNotYet, ""
-	case -2:
+	if maxCount >= th {
+		return VoteResultMajority, mhs
+	}
+
+	if remain == 0 {
 		return VoteResultDraw, ""
-	default:
-		return VoteResultMajority, keys[set[index]]
 	}
+
+	if maxCount+remain < th {
+		return VoteResultDraw, ""
+	}
+
+	return VoteResultNotYet, ""
 }
