@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/network"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
+	nutil "github.com/ProtoconNet/mitum2/network/util"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -262,7 +262,7 @@ func (n memberMeta) IsValid([]byte) error {
 		n.address,
 		n.publickey,
 		util.DummyIsValider(func([]byte) error {
-			return network.IsValidAddr(n.publish)
+			return nutil.IsValidAddr(n.publish)
 		}),
 	); err != nil {
 		return e.Wrap(err)

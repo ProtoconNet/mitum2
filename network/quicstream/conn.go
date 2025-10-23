@@ -3,28 +3,28 @@ package quicstream
 import (
 	"net"
 
-	"github.com/ProtoconNet/mitum2/network"
+	nutil "github.com/ProtoconNet/mitum2/network/util"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
 )
 
 type ConnInfo struct {
 	addr        *net.UDPAddr
-	tlsinsecure bool
+	tlsInsecure bool
 }
 
-func UnsafeConnInfo(addr *net.UDPAddr, tlsinsecure bool) ConnInfo {
-	return ConnInfo{addr: addr, tlsinsecure: tlsinsecure}
+func UnsafeConnInfo(addr *net.UDPAddr, tlsInsecure bool) ConnInfo {
+	return ConnInfo{addr: addr, tlsInsecure: tlsInsecure}
 }
 
-func NewConnInfo(addr *net.UDPAddr, tlsinsecure bool) (ConnInfo, error) {
-	ci := UnsafeConnInfo(addr, tlsinsecure)
+func NewConnInfo(addr *net.UDPAddr, tlsInsecure bool) (ConnInfo, error) {
+	ci := UnsafeConnInfo(addr, tlsInsecure)
 
 	return ci, ci.IsValid(nil)
 }
 
-func MustConnInfo(addr *net.UDPAddr, tlsinsecure bool) ConnInfo {
-	ci, err := NewConnInfo(addr, tlsinsecure)
+func MustConnInfo(addr *net.UDPAddr, tlsInsecure bool) ConnInfo {
+	ci, err := NewConnInfo(addr, tlsInsecure)
 	if err != nil {
 		panic(err)
 	}
@@ -33,15 +33,15 @@ func MustConnInfo(addr *net.UDPAddr, tlsinsecure bool) ConnInfo {
 }
 
 func NewConnInfoFromFullString(s string) (ConnInfo, error) {
-	as, tlsinsecure := network.ParseTLSInsecure(s)
+	as, tlsInsecure := nutil.ParseTLSInsecure(s)
 
-	return NewConnInfoFromStringAddr(as, tlsinsecure)
+	return NewConnInfoFromStringAddr(as, tlsInsecure)
 }
 
 func MustNewConnInfoFromFullString(s string) ConnInfo {
-	as, tlsinsecure := network.ParseTLSInsecure(s)
+	as, tlsInsecure := nutil.ParseTLSInsecure(s)
 
-	ci, err := NewConnInfoFromStringAddr(as, tlsinsecure)
+	ci, err := NewConnInfoFromStringAddr(as, tlsInsecure)
 	if err != nil {
 		panic(err)
 	}
@@ -49,10 +49,10 @@ func MustNewConnInfoFromFullString(s string) ConnInfo {
 	return ci
 }
 
-func NewConnInfoFromStringAddr(s string, tlsinsecure bool) (ci ConnInfo, _ error) {
+func NewConnInfoFromStringAddr(s string, tlsInsecure bool) (ci ConnInfo, _ error) {
 	addr, err := net.ResolveUDPAddr("udp", s)
 	if err == nil {
-		return NewConnInfo(addr, tlsinsecure)
+		return NewConnInfo(addr, tlsInsecure)
 	}
 
 	var dnserr *net.DNSError
@@ -84,7 +84,7 @@ func (c ConnInfo) Addr() net.Addr {
 }
 
 func (c ConnInfo) TLSInsecure() bool {
-	return c.tlsinsecure
+	return c.tlsInsecure
 }
 
 func (c ConnInfo) String() string {
@@ -93,7 +93,7 @@ func (c ConnInfo) String() string {
 		addr = c.addr.String()
 	}
 
-	return network.ConnInfoToString(addr, c.tlsinsecure)
+	return nutil.ConnInfoToString(addr, c.tlsInsecure)
 }
 
 func (c ConnInfo) UDPAddr() *net.UDPAddr {

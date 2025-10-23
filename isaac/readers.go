@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/network"
+	nutil "github.com/ProtoconNet/mitum2/network/util"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
@@ -1116,7 +1116,7 @@ func HTTPBlockItemReadFunc() RemoteBlockItemReadFunc {
 	insecure := httpBlockItemReadFunc(true)
 
 	return func(ctx context.Context, uri url.URL, callback func(io.Reader) error) (bool, error) {
-		if uri.Scheme == "https" && network.HasTLSInsecure(uri.Fragment, HTTPInsecureFlag) {
+		if uri.Scheme == "https" && nutil.HasTLSInsecure(uri.Fragment, HTTPInsecureFlag) {
 			return insecure(ctx, uri, callback)
 		}
 

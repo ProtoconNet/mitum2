@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/ProtoconNet/mitum2/base"
-	"github.com/ProtoconNet/mitum2/network"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
+	nutil "github.com/ProtoconNet/mitum2/network/util"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/pkg/errors"
@@ -57,11 +57,11 @@ func (f *ConnInfoFlag) UnmarshalText(b []byte) error {
 
 	s := string(b)
 
-	if err := network.IsValidAddr(s); err != nil {
+	if err := nutil.IsValidAddr(s); err != nil {
 		return e.Wrap(err)
 	}
 
-	f.addr, f.tlsinsecure = network.ParseTLSInsecure(s)
+	f.addr, f.tlsinsecure = nutil.ParseTLSInsecure(s)
 
 	switch ci, err := quicstream.NewConnInfoFromStringAddr(f.addr, f.tlsinsecure); {
 	case err != nil:
@@ -74,7 +74,7 @@ func (f *ConnInfoFlag) UnmarshalText(b []byte) error {
 }
 
 func (f ConnInfoFlag) String() string {
-	return network.ConnInfoToString(f.addr, f.tlsinsecure)
+	return nutil.ConnInfoToString(f.addr, f.tlsinsecure)
 }
 
 func (f ConnInfoFlag) MarshalText() ([]byte, error) {

@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ProtoconNet/mitum2/network"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
+	nutil "github.com/ProtoconNet/mitum2/network/util"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
 )
@@ -65,7 +65,7 @@ func (c NamedConnInfo) TLSInsecure() bool {
 func (c NamedConnInfo) IsValid([]byte) error {
 	e := util.ErrInvalid.Errorf("invalid NamedConnInfo")
 
-	if err := network.IsValidAddr(c.addr.String()); err != nil {
+	if err := nutil.IsValidAddr(c.addr.String()); err != nil {
 		return e.Wrap(err)
 	}
 
@@ -77,7 +77,7 @@ func (c NamedConnInfo) IsValid([]byte) error {
 }
 
 func (c NamedConnInfo) String() string {
-	return network.ConnInfoToString(c.addr.String(), c.TLSInsecure())
+	return nutil.ConnInfoToString(c.addr.String(), c.TLSInsecure())
 }
 
 func (c NamedConnInfo) MarshalText() ([]byte, error) {
@@ -85,7 +85,7 @@ func (c NamedConnInfo) MarshalText() ([]byte, error) {
 }
 
 func (c *NamedConnInfo) UnmarshalText(b []byte) error {
-	addr, tlsinsecure := network.ParseTLSInsecure(string(b))
+	addr, tlsinsecure := nutil.ParseTLSInsecure(string(b))
 
 	nci, err := NewNamedConnInfo(addr, tlsinsecure)
 	if err != nil {

@@ -18,15 +18,15 @@ import (
 	"github.com/ProtoconNet/mitum2/isaac"
 	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
 	isaacstates "github.com/ProtoconNet/mitum2/isaac/states"
-	"github.com/ProtoconNet/mitum2/network"
+	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
 	quicstreamheader "github.com/ProtoconNet/mitum2/network/quicstream/header"
+	nutil "github.com/ProtoconNet/mitum2/network/util"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/ProtoconNet/mitum2/util/ps"
-	consulapi "github.com/hashicorp/consul/api"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"gopkg.in/yaml.v3"
@@ -94,13 +94,13 @@ var (
 
 func PNetworkHandlersReadWriteNode(pctx context.Context) (context.Context, error) {
 	var design NodeDesign
-	var params *LocalParams
+	//var params *LocalParams
 	var local base.LocalNode
 	var eventLogging *EventLogging
 
 	if err := util.LoadFromContextOK(pctx,
 		DesignContextKey, &design,
-		LocalParamsContextKey, &params,
+		//LocalParamsContextKey, &params,
 		LocalContextKey, &local,
 		EventLoggingContextKey, &eventLogging,
 	); err != nil {
@@ -133,11 +133,11 @@ func PNetworkHandlersReadWriteNode(pctx context.Context) (context.Context, error
 
 	EnsureHandlerAdd(pctx, &gerror,
 		HandlerNameNodeRead,
-		networkHandlerNodeRead(params.ISAAC.NetworkID(), rf, rl), nil)
+		networkHandlerNodeRead(design.LocalParams.ISAAC.NetworkID(), rf, rl), nil)
 
 	EnsureHandlerAdd(pctx, &gerror,
 		HandlerNameNodeWrite,
-		networkHandlerNodeWrite(params.ISAAC.NetworkID(), wf, wl), nil)
+		networkHandlerNodeWrite(design.LocalParams.ISAAC.NetworkID(), wf, wl), nil)
 
 	return pctx, gerror
 }
@@ -225,19 +225,21 @@ func writeStates(pctx context.Context) (writeNodeValueFunc, error) {
 func writeDesign(pctx context.Context) (writeNodeValueFunc, error) {
 	var log *logging.Logging
 	var flag DesignFlag
+	var encs *encoder.Encoders
 
 	if err := util.LoadFromContextOK(pctx,
 		LoggingContextKey, &log,
 		DesignFlagContextKey, &flag,
+		EncodersContextKey, &encs,
 	); err != nil {
 		return nil, err
 	}
 
-	defaultReadDesignFileF := func() ([]byte, error) { return nil, errors.Errorf("design file; can not read") }
+	defaultReadDesignFileF := func() (*NodeDesign, error) { return nil, errors.Errorf("design file; can not read") }
 	readDesignFileF := defaultReadDesignFileF
 	writeDesignFileF := func([]byte) error { return errors.Errorf("design file; can not write") }
 
-	switch i, err := readDesignFileFunc(flag); {
+	switch i, err := readDesignFileFunc(flag, encs); {
 	case err != nil:
 		return nil, err
 	case i == nil:
@@ -268,7 +270,7 @@ func writeDesign(pctx context.Context) (writeNodeValueFunc, error) {
 
 	var aclallow ACLAllowFunc
 
-	switch i, err := pACLAllowFunc(pctx); {
+	switch i, err := PACLAllowFunc(pctx); {
 	case err != nil:
 		return nil, err
 	default:
@@ -322,8 +324,14 @@ func writeDesignMap(pctx context.Context) (map[string]writeNodeValueFunc, error)
 		"parameters.isaac.threshold":                           writeLocalParamISAACThreshold(params.ISAAC),
 		"parameters.isaac.interval_broadcast_ballot":           writeLocalParamISAACIntervalBroadcastBallot(params.ISAAC),
 		"parameters.isaac.wait_preparing_init_ballot":          writeLocalParamISAACWaitPreparingINITBallot(params.ISAAC),
+		"parameters.isaac.ballot_stuck_wait":                   writeLocalParamISAACBallotStuckWait(params.ISAAC),
+		"parameters.isaac.ballot_stuck_resolve_after":          writeLocalParamISAACBallotStuckResolveAfter(params.ISAAC),
 		"parameters.isaac.min_wait_next_block_init_ballot":     writeLocalParamISAACMinWaitNextBlockINITBallot(params.ISAAC),
+		"parameters.isaac.syncer_last_block_map_interval":      writeLocalParamISAACSyncerLastBlockMapInterval(params.ISAAC),
+		"parameters.isaac.min_proposer_wait":                   writeLocalParamISAACMinProposerWait(params.ISAAC),
 		"parameters.isaac.max_try_handover_y_broker_sync_data": writeLocalParamISAACMaxTryHandoverYBrokerSyncData(params.ISAAC),
+		"parameters.isaac.state_cache_size":                    writeLocalParamISAACStateCacheSize(params.ISAAC),
+		"parameters.isaac.operation_pool_cache_size":           writeLocalParamISAACOperationPoolCacheSize(params.ISAAC),
 
 		"parameters.misc.sync_source_checker_interval":              writeLocalParamMISCSyncSourceCheckerInterval(params.MISC),
 		"parameters.misc.valid_proposal_operation_expire":           writeLocalParamMISCValidProposalOperationExpire(params.MISC),
@@ -332,7 +340,18 @@ func writeDesignMap(pctx context.Context) (map[string]writeNodeValueFunc, error)
 		"parameters.misc.block_item_readers_remove_empty_interval":  writeLocalParamMISCBlockItemReadersRemoveEmptyInterval(params.MISC),
 		"parameters.misc.max_message_size":                          writeLocalParamMISCMaxMessageSize(params.MISC),
 
-		"parameters.memberlist.extra_same_member_limit": writeLocalParamExtraSameMemberLimit(params.Memberlist),
+		"parameters.memberlist.extra_same_member_limit":    writeLocalParamMemberlistExtraSameMemberLimit(params.Memberlist),
+		"parameters.memberlist.tcp_timeout":                writeLocalParamMemberlistTcpTimeout(params.Memberlist),
+		"parameters.memberlist.retransmit_mult":            writeLocalParamMemberlistRetransmitMult(params.Memberlist),
+		"parameters.memberlist.probe_timeout":              writeLocalParamMemberlistProbeTimeout(params.Memberlist),
+		"parameters.memberlist.probe_interval":             writeLocalParamMemberlistProbeInterval(params.Memberlist),
+		"parameters.memberlist.gossip_interval":            writeLocalParamMemberlistGossipInterval(params.Memberlist),
+		"parameters.memberlist.gossip_nodes":               writeLocalParamMemberlistGossipNodes(params.Memberlist),
+		"parameters.memberlist.suspicion_mult":             writeLocalParamMemberlistSuspicionMult(params.Memberlist),
+		"parameters.memberlist.suspicion_max_timeout_mult": writeLocalParamMemberlistSuspicionMaxTimeoutMult(params.Memberlist),
+		"parameters.memberlist.udp_buffer_size":            writeLocalParamMemberlistUdpBufferSize(params.Memberlist),
+		"parameters.memberlist.broadcast_timer_mult":       writeLocalParamMemberlistBroadcastTimerMult(params.Memberlist),
+		"parameters.memberlist.user_msg_loop_interval":     writeLocalParamMemberlistUserMsgLoopInterval(params.Memberlist),
 
 		"parameters.network.timeout_request":    writeLocalParamNetworkTimeoutRequest(params.Network),
 		"parameters.network.ratelimit.node":     writeLocalParamNetworkRateLimit(params.Network.RateLimit(), "node"),
@@ -424,6 +443,54 @@ func writeLocalParamISAACWaitPreparingINITBallot(
 	})
 }
 
+func writeLocalParamISAACBallotStuckWait(
+	params *isaac.Params,
+) writeNodeValueFunc {
+	return writeNodeKey(func(
+		_ context.Context, _, _, value, _ string,
+	) (prev, next interface{}, updated bool, _ error) {
+		d, err := parseNodeValueDuration(value)
+		if err != nil {
+			return nil, nil, false, err
+		}
+
+		prev = params.BallotStuckWait()
+		if prev == d {
+			return prev, nil, false, nil
+		}
+
+		if err := params.SetBallotStuckWait(d); err != nil {
+			return nil, nil, false, err
+		}
+
+		return prev, params.BallotStuckWait(), true, nil
+	})
+}
+
+func writeLocalParamISAACBallotStuckResolveAfter(
+	params *isaac.Params,
+) writeNodeValueFunc {
+	return writeNodeKey(func(
+		_ context.Context, _, _, value, _ string,
+	) (prev, next interface{}, updated bool, _ error) {
+		d, err := parseNodeValueDuration(value)
+		if err != nil {
+			return nil, nil, false, err
+		}
+
+		prev = params.BallotStuckResolveAfter()
+		if prev == d {
+			return prev, nil, false, nil
+		}
+
+		if err := params.SetBallotStuckResolveAfter(d); err != nil {
+			return nil, nil, false, err
+		}
+
+		return prev, params.BallotStuckResolveAfter(), true, nil
+	})
+}
+
 func writeLocalParamISAACMinWaitNextBlockINITBallot(
 	params *isaac.Params,
 ) writeNodeValueFunc {
@@ -445,6 +512,54 @@ func writeLocalParamISAACMinWaitNextBlockINITBallot(
 		}
 
 		return prev, params.MinWaitNextBlockINITBallot(), true, nil
+	})
+}
+
+func writeLocalParamISAACSyncerLastBlockMapInterval(
+	params *isaac.Params,
+) writeNodeValueFunc {
+	return writeNodeKey(func(
+		_ context.Context, _, _, value, _ string,
+	) (prev, next interface{}, updated bool, _ error) {
+		d, err := parseNodeValueDuration(value)
+		if err != nil {
+			return nil, nil, false, err
+		}
+
+		prev = params.SyncerLastBlockMapInterval()
+		if prev == d {
+			return prev, nil, false, nil
+		}
+
+		if err := params.SetSyncerLastBlockMapInterval(d); err != nil {
+			return nil, nil, false, err
+		}
+
+		return prev, params.SyncerLastBlockMapInterval(), true, nil
+	})
+}
+
+func writeLocalParamISAACMinProposerWait(
+	params *isaac.Params,
+) writeNodeValueFunc {
+	return writeNodeKey(func(
+		_ context.Context, _, _, value, _ string,
+	) (prev, next interface{}, updated bool, _ error) {
+		d, err := parseNodeValueDuration(value)
+		if err != nil {
+			return nil, nil, false, err
+		}
+
+		prev = params.MinProposerWait()
+		if prev == d {
+			return prev, nil, false, nil
+		}
+
+		if err := params.SetMinProposerWait(d); err != nil {
+			return nil, nil, false, err
+		}
+
+		return prev, params.MinProposerWait(), true, nil
 	})
 }
 
@@ -472,8 +587,65 @@ func writeLocalParamISAACMaxTryHandoverYBrokerSyncData(
 	})
 }
 
+func writeLocalParamISAACStateCacheSize(
+	params *isaac.Params,
+) writeNodeValueFunc {
+	return writeNodeKey(func(
+		_ context.Context, _, _, value, _ string,
+	) (prev, next interface{}, updated bool, _ error) {
+		var s string
+		if err := yaml.Unmarshal([]byte(value), &s); err != nil {
+			return nil, nil, false, errors.WithStack(err)
+		}
+
+		i, err := strconv.Atoi(s)
+		if err != nil {
+			return nil, nil, false, errors.WithStack(err)
+		}
+		prev = params.StateCacheSize()
+		if prev == i {
+			return prev, nil, false, nil
+		}
+
+		if err := params.SetStateCacheSize(i); err != nil {
+			return nil, nil, false, err
+		}
+
+		return prev, params.StateCacheSize(), true, nil
+	})
+}
+
+func writeLocalParamISAACOperationPoolCacheSize(
+	params *isaac.Params,
+) writeNodeValueFunc {
+	return writeNodeKey(func(
+		_ context.Context, _, _, value, _ string,
+	) (prev, next interface{}, updated bool, _ error) {
+		var s string
+		if err := yaml.Unmarshal([]byte(value), &s); err != nil {
+			return nil, nil, false, errors.WithStack(err)
+		}
+
+		i, err := strconv.Atoi(s)
+		if err != nil {
+			return nil, nil, false, errors.WithStack(err)
+		}
+
+		prev = params.OperationPoolCacheSize()
+		if prev == i {
+			return prev, nil, false, nil
+		}
+
+		if err := params.SetOperationPoolCacheSize(i); err != nil {
+			return nil, nil, false, err
+		}
+
+		return prev, params.OperationPoolCacheSize(), true, nil
+	})
+}
+
 func writeLocalParamMISCSyncSourceCheckerInterval(
-	params *MISCParams,
+	params *isaac.MISCParams,
 ) writeNodeValueFunc {
 	return writeNodeKey(func(
 		_ context.Context, _, _, value, _ string,
@@ -497,7 +669,7 @@ func writeLocalParamMISCSyncSourceCheckerInterval(
 }
 
 func writeLocalParamMISCValidProposalOperationExpire(
-	params *MISCParams,
+	params *isaac.MISCParams,
 ) writeNodeValueFunc {
 	return writeNodeKey(func(
 		_ context.Context, _, _, value, _ string,
@@ -521,7 +693,7 @@ func writeLocalParamMISCValidProposalOperationExpire(
 }
 
 func writeLocalParamMISCValidProposalSuffrageOperationsExpire(
-	params *MISCParams,
+	params *isaac.MISCParams,
 ) writeNodeValueFunc {
 	return writeNodeKey(func(
 		_ context.Context, _, _, value, _ string,
@@ -545,7 +717,7 @@ func writeLocalParamMISCValidProposalSuffrageOperationsExpire(
 }
 
 func writeLocalParamMISCBlockItemReadersRemoveEmptyAfter(
-	params *MISCParams,
+	params *isaac.MISCParams,
 ) writeNodeValueFunc {
 	return writeNodeKey(func(
 		_ context.Context, _, _, value, _ string,
@@ -569,7 +741,7 @@ func writeLocalParamMISCBlockItemReadersRemoveEmptyAfter(
 }
 
 func writeLocalParamMISCBlockItemReadersRemoveEmptyInterval(
-	params *MISCParams,
+	params *isaac.MISCParams,
 ) writeNodeValueFunc {
 	return writeNodeKey(func(
 		_ context.Context, _, _, value, _ string,
@@ -593,7 +765,7 @@ func writeLocalParamMISCBlockItemReadersRemoveEmptyInterval(
 }
 
 func writeLocalParamMISCMaxMessageSize(
-	params *MISCParams,
+	params *isaac.MISCParams,
 ) writeNodeValueFunc {
 	return writeNodeKey(func(
 		_ context.Context, _, _, value, _ string,
@@ -616,8 +788,8 @@ func writeLocalParamMISCMaxMessageSize(
 	})
 }
 
-func writeLocalParamExtraSameMemberLimit(
-	params *MemberlistParams,
+func writeLocalParamMemberlistExtraSameMemberLimit(
+	params *quicmemberlist.MemberlistParams,
 ) writeNodeValueFunc {
 	return writeNodeKey(
 		func(_ context.Context, _, _, value, _ string) (prev, next interface{}, updated bool, _ error) {
@@ -636,6 +808,289 @@ func writeLocalParamExtraSameMemberLimit(
 			}
 
 			return prev, params.ExtraSameMemberLimit(), true, nil
+		})
+}
+
+func writeLocalParamMemberlistTcpTimeout(
+	params *quicmemberlist.MemberlistParams,
+) writeNodeValueFunc {
+	return writeNodeKey(
+		func(_ context.Context, _, _, value, _ string) (prev, next interface{}, updated bool, _ error) {
+			d, err := parseNodeValueDuration(value)
+			if err != nil {
+				return nil, nil, false, err
+			}
+
+			prev = params.TCPTimeout()
+			if prev == d {
+				return prev, nil, false, nil
+			}
+
+			if err := params.SetTCPTimeout(d); err != nil {
+				return nil, nil, false, err
+			}
+
+			return prev, params.TCPTimeout(), true, nil
+		})
+}
+
+func writeLocalParamMemberlistRetransmitMult(
+	params *quicmemberlist.MemberlistParams,
+) writeNodeValueFunc {
+	return writeNodeKey(
+		func(_ context.Context, _, _, value, _ string) (prev, next interface{}, updated bool, _ error) {
+			var s string
+			if err := yaml.Unmarshal([]byte(value), &s); err != nil {
+				return nil, nil, false, errors.WithStack(err)
+			}
+
+			i, err := strconv.Atoi(s)
+			if err != nil {
+				return nil, nil, false, errors.WithStack(err)
+			}
+
+			prev = params.RetransmitMult()
+			if prev == i {
+				return prev, nil, false, nil
+			}
+
+			if err := params.SetRetransmitMult(i); err != nil {
+				return nil, nil, false, err
+			}
+
+			return prev, params.RetransmitMult(), true, nil
+		})
+}
+
+func writeLocalParamMemberlistProbeTimeout(
+	params *quicmemberlist.MemberlistParams,
+) writeNodeValueFunc {
+	return writeNodeKey(
+		func(_ context.Context, _, _, value, _ string) (prev, next interface{}, updated bool, _ error) {
+			d, err := parseNodeValueDuration(value)
+			if err != nil {
+				return nil, nil, false, err
+			}
+
+			prev = params.ProbeTimeout()
+			if prev == d {
+				return prev, nil, false, nil
+			}
+
+			if err := params.SetProbeTimeout(d); err != nil {
+				return nil, nil, false, err
+			}
+
+			return prev, params.ProbeTimeout(), true, nil
+		})
+}
+
+func writeLocalParamMemberlistProbeInterval(
+	params *quicmemberlist.MemberlistParams,
+) writeNodeValueFunc {
+	return writeNodeKey(
+		func(_ context.Context, _, _, value, _ string) (prev, next interface{}, updated bool, _ error) {
+			d, err := parseNodeValueDuration(value)
+			if err != nil {
+				return nil, nil, false, err
+			}
+
+			prev = params.ProbeInterval()
+			if prev == d {
+				return prev, nil, false, nil
+			}
+
+			if err := params.SetProbeInterval(d); err != nil {
+				return nil, nil, false, err
+			}
+
+			return prev, params.ProbeInterval(), true, nil
+		})
+}
+
+func writeLocalParamMemberlistGossipInterval(
+	params *quicmemberlist.MemberlistParams,
+) writeNodeValueFunc {
+	return writeNodeKey(
+		func(_ context.Context, _, _, value, _ string) (prev, next interface{}, updated bool, _ error) {
+			d, err := parseNodeValueDuration(value)
+			if err != nil {
+				return nil, nil, false, err
+			}
+
+			prev = params.GossipInterval()
+			if prev == d {
+				return prev, nil, false, nil
+			}
+
+			if err := params.SetGossipInterval(d); err != nil {
+				return nil, nil, false, err
+			}
+
+			return prev, params.GossipInterval(), true, nil
+		})
+}
+
+func writeLocalParamMemberlistGossipNodes(
+	params *quicmemberlist.MemberlistParams,
+) writeNodeValueFunc {
+	return writeNodeKey(
+		func(_ context.Context, _, _, value, _ string) (prev, next interface{}, updated bool, _ error) {
+			var s string
+			if err := yaml.Unmarshal([]byte(value), &s); err != nil {
+				return nil, nil, false, errors.WithStack(err)
+			}
+
+			i, err := strconv.Atoi(s)
+			if err != nil {
+				return nil, nil, false, errors.WithStack(err)
+			}
+
+			prev = params.GosshipNodes()
+			if prev == i {
+				return prev, nil, false, nil
+			}
+
+			if err := params.SetGosshipNodes(i); err != nil {
+				return nil, nil, false, err
+			}
+
+			return prev, params.GosshipNodes(), true, nil
+		})
+}
+
+func writeLocalParamMemberlistSuspicionMult(
+	params *quicmemberlist.MemberlistParams,
+) writeNodeValueFunc {
+	return writeNodeKey(
+		func(_ context.Context, _, _, value, _ string) (prev, next interface{}, updated bool, _ error) {
+			var s string
+			if err := yaml.Unmarshal([]byte(value), &s); err != nil {
+				return nil, nil, false, errors.WithStack(err)
+			}
+
+			i, err := strconv.Atoi(s)
+			if err != nil {
+				return nil, nil, false, errors.WithStack(err)
+			}
+
+			prev = params.SuspicionMult()
+			if prev == i {
+				return prev, nil, false, nil
+			}
+
+			if err := params.SetSuspicionMult(i); err != nil {
+				return nil, nil, false, err
+			}
+
+			return prev, params.SuspicionMult(), true, nil
+		})
+}
+
+func writeLocalParamMemberlistSuspicionMaxTimeoutMult(
+	params *quicmemberlist.MemberlistParams,
+) writeNodeValueFunc {
+	return writeNodeKey(
+		func(_ context.Context, _, _, value, _ string) (prev, next interface{}, updated bool, _ error) {
+			var s string
+			if err := yaml.Unmarshal([]byte(value), &s); err != nil {
+				return nil, nil, false, errors.WithStack(err)
+			}
+
+			i, err := strconv.Atoi(s)
+			if err != nil {
+				return nil, nil, false, errors.WithStack(err)
+			}
+
+			prev = params.SuspicionMaxTimeoutMult()
+			if prev == i {
+				return prev, nil, false, nil
+			}
+
+			if err := params.SetSuspicionMaxTimeoutMult(i); err != nil {
+				return nil, nil, false, err
+			}
+
+			return prev, params.SuspicionMaxTimeoutMult(), true, nil
+		})
+}
+
+func writeLocalParamMemberlistUdpBufferSize(
+	params *quicmemberlist.MemberlistParams,
+) writeNodeValueFunc {
+	return writeNodeKey(
+		func(_ context.Context, _, _, value, _ string) (prev, next interface{}, updated bool, _ error) {
+			var s string
+			if err := yaml.Unmarshal([]byte(value), &s); err != nil {
+				return nil, nil, false, errors.WithStack(err)
+			}
+
+			i, err := strconv.Atoi(s)
+			if err != nil {
+				return nil, nil, false, errors.WithStack(err)
+			}
+
+			prev = params.UDPBufferSize()
+			if prev == i {
+				return prev, nil, false, nil
+			}
+
+			if err := params.SetUDPBufferSize(i); err != nil {
+				return nil, nil, false, err
+			}
+
+			return prev, params.UDPBufferSize(), true, nil
+		})
+}
+
+func writeLocalParamMemberlistBroadcastTimerMult(
+	params *quicmemberlist.MemberlistParams,
+) writeNodeValueFunc {
+	return writeNodeKey(
+		func(_ context.Context, _, _, value, _ string) (prev, next interface{}, updated bool, _ error) {
+			var s string
+			if err := yaml.Unmarshal([]byte(value), &s); err != nil {
+				return nil, nil, false, errors.WithStack(err)
+			}
+
+			i, err := strconv.Atoi(s)
+			if err != nil {
+				return nil, nil, false, errors.WithStack(err)
+			}
+
+			prev = params.BroadcastTimerMult()
+			if prev == i {
+				return prev, nil, false, nil
+			}
+
+			if err := params.SetBroadcastTimerMult(i); err != nil {
+				return nil, nil, false, err
+			}
+
+			return prev, params.BroadcastTimerMult(), true, nil
+		})
+}
+
+func writeLocalParamMemberlistUserMsgLoopInterval(
+	params *quicmemberlist.MemberlistParams,
+) writeNodeValueFunc {
+	return writeNodeKey(
+		func(_ context.Context, _, _, value, _ string) (prev, next interface{}, updated bool, _ error) {
+			d, err := parseNodeValueDuration(value)
+			if err != nil {
+				return nil, nil, false, err
+			}
+
+			prev = params.UserMsgLoopInterval()
+			if prev == d {
+				return prev, nil, false, nil
+			}
+
+			if err := params.SetUserMsgLoopInterval(d); err != nil {
+				return nil, nil, false, err
+			}
+
+			return prev, params.UserMsgLoopInterval(), true, nil
 		})
 }
 
@@ -705,7 +1160,7 @@ func writeDiscovery(pctx context.Context) (writeNodeValueFunc, error) {
 
 	var aclallow ACLAllowFunc
 
-	switch i, err := pACLAllowFunc(pctx); {
+	switch i, err := PACLAllowFunc(pctx); {
 	case err != nil:
 		return nil, err
 	default:
@@ -727,11 +1182,11 @@ func writeDiscovery(pctx context.Context) (writeNodeValueFunc, error) {
 		cis := make([]quicstream.ConnInfo, len(sl))
 
 		for i := range sl {
-			if err := network.IsValidAddr(sl[i]); err != nil {
+			if err := nutil.IsValidAddr(sl[i]); err != nil {
 				return nil, nil, false, e.Wrap(err)
 			}
 
-			addr, tlsinsecure := network.ParseTLSInsecure(sl[i])
+			addr, tlsinsecure := nutil.ParseTLSInsecure(sl[i])
 
 			ci, err := quicstream.NewConnInfoFromStringAddr(addr, tlsinsecure)
 			if err != nil {
@@ -819,7 +1274,7 @@ func writeAllowConsensus(pctx context.Context) (writeNodeValueFunc, error) {
 
 	var aclallow ACLAllowFunc
 
-	switch i, err := pACLAllowFunc(pctx); {
+	switch i, err := PACLAllowFunc(pctx); {
 	case err != nil:
 		return nil, err
 	default:
@@ -866,7 +1321,7 @@ func writeACL(pctx context.Context) (writeNodeValueFunc, error) {
 
 	var aclallow ACLAllowFunc
 
-	switch i, err := pACLAllowFunc(pctx); {
+	switch i, err := PACLAllowFunc(pctx); {
 	case err != nil:
 		return nil, err
 	default:
@@ -916,7 +1371,7 @@ func writeBlockItemFiles(pctx context.Context) (writeNodeValueFunc, error) {
 
 	var aclallow ACLAllowFunc
 
-	switch i, err := pACLAllowFunc(pctx); {
+	switch i, err := PACLAllowFunc(pctx); {
 	case err != nil:
 		return nil, err
 	default:
@@ -1393,27 +1848,29 @@ func readDesign(pctx context.Context) (readNodeValueFunc, error) {
 	var design NodeDesign
 	var log *logging.Logging
 	var flag DesignFlag
+	var encs *encoder.Encoders
 
 	if err := util.LoadFromContextOK(pctx,
 		DesignContextKey, &design,
 		LoggingContextKey, &log,
 		DesignFlagContextKey, &flag,
+		EncodersContextKey, &encs,
 	); err != nil {
 		return nil, err
 	}
 
 	var aclallow ACLAllowFunc
 
-	switch i, err := pACLAllowFunc(pctx); {
+	switch i, err := PACLAllowFunc(pctx); {
 	case err != nil:
 		return nil, err
 	default:
 		aclallow = i
 	}
 
-	readDesignFileF := func() ([]byte, error) { return nil, errors.Errorf("design file; can not read") }
+	readDesignFileF := func() (*NodeDesign, error) { return nil, errors.Errorf("design file; can not read") }
 
-	switch i, err := readDesignFileFunc(flag); {
+	switch i, err := readDesignFileFunc(flag, encs); {
 	case err != nil:
 		return nil, err
 	case i == nil:
@@ -1464,7 +1921,7 @@ func readAllowConsensus(pctx context.Context) (readNodeValueFunc, error) {
 
 	var aclallow ACLAllowFunc
 
-	switch i, err := pACLAllowFunc(pctx); {
+	switch i, err := PACLAllowFunc(pctx); {
 	case err != nil:
 		return nil, err
 	default:
@@ -1494,7 +1951,7 @@ func readDiscovery(pctx context.Context) (readNodeValueFunc, error) {
 
 	var aclallow ACLAllowFunc
 
-	switch i, err := pACLAllowFunc(pctx); {
+	switch i, err := PACLAllowFunc(pctx); {
 	case err != nil:
 		return nil, err
 	default:
@@ -1524,7 +1981,7 @@ func readACL(pctx context.Context) (readNodeValueFunc, error) {
 
 	var aclallow ACLAllowFunc
 
-	switch i, err := pACLAllowFunc(pctx); {
+	switch i, err := PACLAllowFunc(pctx); {
 	case err != nil:
 		return nil, err
 	default:
@@ -1561,7 +2018,7 @@ func readBlockItemFiles(pctx context.Context) (readNodeValueFunc, error) {
 
 	var aclallow ACLAllowFunc
 
-	switch i, err := pACLAllowFunc(pctx); {
+	switch i, err := PACLAllowFunc(pctx); {
 	case err != nil:
 		return nil, err
 	default:
@@ -1861,63 +2318,195 @@ func omapFromDesignMap(m *util.YAMLOrderedMap, key string) (lastkey string, _ *u
 	return l[len(l)-1], p, nil
 }
 
-func updateDesignMap(m *util.YAMLOrderedMap, key string, value interface{}) error {
-	switch k, i, err := omapFromDesignMap(m, key); {
-	case err != nil:
-		return err
-	default:
-		_ = i.Set(k, value)
+func updateDesignMap(src []byte, dotPath string, newVal any) ([]byte, error) {
+	var root yaml.Node
+	if err := yaml.Unmarshal(src, &root); err != nil {
+		return nil, fmt.Errorf("unmarshal: %w", err)
+	}
+	if len(root.Content) == 0 {
+		return nil, fmt.Errorf("empty YAML document")
+	}
+	doc := root.Content[0]
+	if doc.Kind != yaml.MappingNode {
+		return nil, fmt.Errorf("top-level must be a mapping node")
+	}
 
-		return nil
+	parts := strings.Split(dotPath, ".")
+	cur := doc
+
+	for i, p := range parts {
+		last := i == len(parts)-1
+		ki, val, found := findPair(cur, p)
+
+		if !found {
+			return nil, fmt.Errorf("key %q not found in path %q", p, dotPath)
+		}
+
+		if last {
+			nv, err := coerceForExistingScalar(val, newVal)
+			if err != nil {
+				return nil, fmt.Errorf("set %q: %w", p, err)
+			}
+			cur.Content[ki+1] = nv
+			break
+		}
+
+		if val.Kind != yaml.MappingNode {
+			val.Kind, val.Tag, val.Content = yaml.MappingNode, "!!map", nil
+		}
+		cur = val
+	}
+
+	var out bytes.Buffer
+	enc := yaml.NewEncoder(&out)
+	enc.SetIndent(2)
+	if err := enc.Encode(&root); err != nil {
+		return nil, fmt.Errorf("encode: %w", err)
+	}
+	_ = enc.Close()
+	return out.Bytes(), nil
+}
+
+func findPair(m *yaml.Node, key string) (int, *yaml.Node, bool) {
+	if m.Kind != yaml.MappingNode {
+		return -1, nil, false
+	}
+	for i := 0; i+1 < len(m.Content); i += 2 {
+		if k := m.Content[i]; k.Kind == yaml.ScalarNode && k.Value == key {
+			return i, m.Content[i+1], true
+		}
+	}
+	return -1, nil, false
+}
+
+func coerceForExistingScalar(existing *yaml.Node, v any) (*yaml.Node, error) {
+	if existing.Kind != yaml.ScalarNode {
+		return nil, fmt.Errorf("existing value is not a scalar (kind=%v)", existing.Kind)
+	}
+	switch existing.Tag {
+	case "!!str":
+		return &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: fmt.Sprint(v)}, nil
+	case "!!int":
+		iv, err := coerceInt(v)
+		if err != nil {
+			return nil, err
+		}
+		return &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!int", Value: strconv.Itoa(iv)}, nil
+	case "!!bool":
+		bv, err := coerceBool(v)
+		if err != nil {
+			return nil, err
+		}
+		return &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!bool", Value: strconv.FormatBool(bv)}, nil
+	default:
+		return nil, fmt.Errorf("unsupported scalar tag %q at value %q", existing.Tag, existing.Value)
+	}
+}
+
+func coerceInt(v any) (int, error) {
+	switch t := v.(type) {
+	case int:
+		return t, nil
+	case int64:
+		return int(t), nil
+	case string:
+		x, err := strconv.Atoi(t)
+		if err != nil {
+			return 0, fmt.Errorf("cannot parse %q as int", t)
+		}
+		return x, nil
+	default:
+		return 0, fmt.Errorf("type %T cannot be coerced to int", v)
+	}
+}
+
+func coerceBool(v any) (bool, error) {
+	switch t := v.(type) {
+	case bool:
+		return t, nil
+	case string:
+		switch strings.ToLower(t) {
+		case "true":
+			return true, nil
+		case "false":
+			return false, nil
+		default:
+			return false, fmt.Errorf("cannot parse %q as bool", t)
+		}
+	default:
+		return false, fmt.Errorf("type %T cannot be coerced to bool", v)
 	}
 }
 
 func writeDesignFile(
 	key string, value interface{},
-	read func() ([]byte, error),
+	read func() (*NodeDesign, error),
 	write func([]byte) error,
 ) error {
-	var m *util.YAMLOrderedMap
+	var nd *NodeDesign
+	var b []byte
+	var err error
 
-	switch b, err := read(); {
+	switch nd, err = read(); {
 	case err != nil:
 		return err
 	default:
-		if err := yaml.Unmarshal(b, &m); err != nil {
+		if b, err = yaml.Marshal(nd.MarshalYAML()); err != nil {
 			return errors.WithStack(err)
 		}
 	}
 
-	if err := updateDesignMap(m, key, value); err != nil {
+	nb, err := updateDesignMap(b, key, value)
+	if err != nil {
 		return err
 	}
 
-	switch b, err := yaml.Marshal(m); {
-	case err != nil:
-		return errors.WithStack(err)
-	default:
-		return write(b)
-	}
+	return write(nb)
 }
 
-func readDesignFileFunc(flag DesignFlag) (func() ([]byte, error), error) {
+func readDesignFileFunc(flag DesignFlag, encs *encoder.Encoders) (func() (*NodeDesign, error), error) {
+	var design NodeDesign
+	var rErr error
+
 	switch flag.Scheme() {
 	case "file":
-		return func() ([]byte, error) {
-			b, err := os.ReadFile(flag.URL().Path)
+		return func() (*NodeDesign, error) {
+			switch d, _, err := NodeDesignFromFile(flag.URL().Path, encs.JSON()); {
+			case err != nil:
+				return nil, errors.WithStack(err)
+			default:
+				design = d
+				rErr = nil
+			}
 
-			return b, errors.WithStack(err)
+			return &design, errors.WithStack(rErr)
 		}, nil
+
 	case "http", "https":
-		return func() ([]byte, error) {
-			return getFromHTTP(flag.URL().String(), flag.Properties().HTTPSTLSInsecure)
+		return func() (*NodeDesign, error) {
+			switch d, _, err := NodeDesignFromHTTP(flag.URL().Path, flag.Properties().HTTPSTLSInsecure, encs.JSON()); {
+			case err != nil:
+				return nil, errors.WithStack(err)
+			default:
+				design = d
+			}
+
+			return &design, errors.WithStack(rErr)
 		}, nil
 	case "consul":
-		return func() ([]byte, error) {
-			return getFromConsul(flag.URL().Host, flag.URL().Path)
+		return func() (*NodeDesign, error) {
+			switch d, _, err := NodeDesignFromConsul(flag.URL().Host, flag.URL().Path, encs.JSON()); {
+			case err != nil:
+				return nil, errors.WithStack(err)
+			default:
+				design = d
+			}
+
+			return &design, errors.WithStack(rErr)
 		}, nil
+
 	default:
-		return nil, errors.Errorf("unknown design uri, %q", flag.URL())
+		return nil, errors.WithStack(errors.Errorf("unknown design uri, %q", flag.URL()))
 	}
 }
 
@@ -1951,16 +2540,7 @@ func writeDesignFileFunc(flag DesignFlag) (func([]byte) error, error) {
 		return nil, nil
 	case "consul":
 		return func(b []byte) error {
-			switch client, err := consulClient(flag.URL().Host); {
-			case err != nil:
-				return err
-			default:
-				kv := &consulapi.KVPair{Key: flag.URL().Path, Value: b}
-
-				_, err = client.KV().Put(kv, nil)
-
-				return errors.WithStack(err)
-			}
+			return WriteConsul(b, flag)
 		}, nil
 	default:
 		return nil, errors.Errorf("unknown design uri, %q", flag.URL())

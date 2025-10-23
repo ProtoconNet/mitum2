@@ -657,6 +657,10 @@ func (m RateLimiterRuleMap) IsEmpty() bool {
 	return m.d == nil && len(m.m) < 1
 }
 
+func (m *RateLimiterRuleMap) RuleMap() map[string]RateLimiterRule {
+	return m.m
+}
+
 func (m RateLimiterRuleMap) Rule(handler string) (rule RateLimiterRule, found bool) {
 	switch i, found := m.rule(handler); {
 	case found:
@@ -711,6 +715,8 @@ func (rs NetRateLimiterRuleSet) IsValid([]byte) error {
 
 	return nil
 }
+
+func (rs *NetRateLimiterRuleSet) Rules() map[string]RateLimiterRuleMap { return rs.rules }
 
 func (rs NetRateLimiterRuleSet) UpdatedAt() int64 {
 	return rs.updatedAt
@@ -803,6 +809,10 @@ func NewNodeRateLimiterRuleSet(
 	return NodeRateLimiterRuleSet{StringKeyRateLimiterRuleSet: newStringKeyRateLimiterRuleSet(rules)}
 }
 
+func (rs *NodeRateLimiterRuleSet) Rules() map[string]RateLimiterRuleMap {
+	return rs.rules
+}
+
 func (rs NodeRateLimiterRuleSet) Rule(
 	_ net.Addr, handler string, hint RateLimitRuleHint,
 ) (_ string, _ RateLimiterRule, _ string, _ bool) {
@@ -841,6 +851,10 @@ func (*SuffrageRateLimiterRuleSet) IsValid([]byte) error {
 
 func (rs *SuffrageRateLimiterRuleSet) UpdatedAt() int64 {
 	return rs.updatedAt
+}
+
+func (rs *SuffrageRateLimiterRuleSet) Rules() RateLimiterRuleMap {
+	return rs.rules
 }
 
 func (rs *SuffrageRateLimiterRuleSet) Rule(

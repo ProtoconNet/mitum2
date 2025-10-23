@@ -119,9 +119,9 @@ func PBallotStuckResolver(pctx context.Context) (context.Context, error) {
 	}
 
 	r := isaacstates.NewDefaultBallotStuckResolver(
-		isaacparams.BallotStuckWait(),
+		isaacparams.BallotStuckWait,
 		time.Second,
-		isaacparams.BallotStuckResolveAfter(),
+		isaacparams.BallotStuckResolveAfter,
 		findMissingBallotsf,
 		requestMissingBallotsf,
 		voteSuffrageVotingf,
@@ -169,7 +169,7 @@ func PStates(pctx context.Context) (context.Context, error) {
 	args.IntervalBroadcastBallot = isaacparams.IntervalBroadcastBallot
 	args.AllowConsensus = devflags.AllowConsensus
 	args.BroadcastTimerMult = func() int {
-		return design.LocalParams.Memberlist.broadcastTimerMult
+		return design.LocalParams.Memberlist.BroadcastTimerMult()
 	}
 
 	if vp := args.LastVoteproofsHandler.Last().Cap(); vp != nil {

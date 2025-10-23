@@ -51,7 +51,7 @@ func TestNodeInfoEncode(tt *testing.T) {
 		info.SetLastManifest(base.NewDummyManifest(base.Height(33), valuehash.RandomSHA256()))
 		info.SetSuffrageHeight(base.Height(44))
 		info.SetNetworkPolicy(isaac.DefaultNetworkPolicy())
-		info.SetLocalParams(isaac.DefaultParams(networkID))
+		info.SetIsaacParams(isaac.DefaultParams(networkID))
 
 		ci, err := quicstream.NewConnInfoFromStringAddr("1.2.3.4:4321", true)
 		t.NoError(err)
@@ -98,7 +98,7 @@ func TestNodeInfoEncode(tt *testing.T) {
 		base.EqualManifest(t.Assert(), ah.lastManifest, bh.lastManifest)
 		t.Equal(ah.suffrageHeight, bh.suffrageHeight)
 		base.EqualNetworkPolicy(t.Assert(), ah.networkPolicy, bh.networkPolicy)
-		isaac.EqualLocalParams(t.Assert(), ah.localParams, bh.localParams)
+		isaac.EqualLocalParams(t.Assert(), ah.isaacParams, bh.isaacParams)
 		t.Equal(ah.connInfo, bh.connInfo)
 		t.Equal(len(ah.consensusNodes), len(bh.consensusNodes))
 		for i := range ah.consensusNodes {

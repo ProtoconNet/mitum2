@@ -8,6 +8,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 var ParamsHint = hint.MustNewHint("isaac-params-v0.0.1")
@@ -479,6 +480,334 @@ func (p *Params) UnmarshalJSON(b []byte) error {
 		p.threshold = base.Threshold(t)
 	case int64:
 		p.threshold = base.Threshold(float64(t))
+	}
+
+	return nil
+}
+
+var MiscParamsHint = hint.MustNewHint("misc-params-v0.0.1")
+
+type MISCParams struct {
+	*util.BaseParams
+	hint.BaseHinter
+	syncSourceCheckerInterval             time.Duration
+	validProposalOperationExpire          time.Duration
+	validProposalSuffrageOperationsExpire time.Duration
+	blockItemReadersRemoveEmptyAfter      time.Duration
+	blockItemReadersRemoveEmptyInterval   time.Duration
+	maxMessageSize                        uint64
+	objectCacheSize                       uint64
+}
+
+func DefaultMISCParams() *MISCParams {
+	return &MISCParams{
+		BaseParams:                            util.NewBaseParams(),
+		BaseHinter:                            hint.NewBaseHinter(MiscParamsHint),
+		syncSourceCheckerInterval:             time.Second * 30, //nolint:gomnd //...
+		validProposalOperationExpire:          time.Hour * 24,   //nolint:gomnd //...
+		validProposalSuffrageOperationsExpire: time.Hour * 2,
+		blockItemReadersRemoveEmptyAfter:      DefaultBlockItemReadersRemoveEmptyAfter,
+		blockItemReadersRemoveEmptyInterval:   DefaultBlockItemReadersRemoveEmptyInterval,
+		maxMessageSize:                        1 << 18, //nolint:gomnd //...
+		objectCacheSize:                       1 << 13, //nolint:gomnd // big enough
+	}
+}
+
+func (p *MISCParams) IsValid([]byte) error {
+	e := util.ErrInvalid.Errorf("invalid MISCParams")
+
+	if err := p.BaseParams.IsValid(nil); err != nil {
+		return e.Wrap(err)
+	}
+
+	if p.syncSourceCheckerInterval < 0 {
+		return e.Errorf("wrong duration; invalid syncSourceCheckerInterval")
+	}
+
+	if p.validProposalOperationExpire < 0 {
+		return e.Errorf("wrong duration; invalid validProposalOperationExpire")
+	}
+
+	if p.validProposalSuffrageOperationsExpire < 0 {
+		return e.Errorf("wrong duration; invalid validProposalSuffrageOperationsExpire")
+	}
+
+	if p.blockItemReadersRemoveEmptyAfter < 0 {
+		return e.Errorf("wrong duration; invalid blockItemReadersRemoveEmptyAfter")
+	}
+
+	if p.blockItemReadersRemoveEmptyInterval < 0 {
+		return e.Errorf("wrong duration; invalid blockItemReadersRemoveEmptyInterval")
+	}
+
+	if p.maxMessageSize < 1 {
+		return e.Errorf("wrong maxMessageSize")
+	}
+
+	if p.objectCacheSize < 1 {
+		return e.Errorf("wrong objectCacheSize")
+	}
+
+	return nil
+}
+
+// SyncSourceCheckerInterval is the interval to check the liveness of sync
+// sources.
+func (p *MISCParams) SyncSourceCheckerInterval() time.Duration {
+	p.RLock()
+	defer p.RUnlock()
+
+	return p.syncSourceCheckerInterval
+}
+
+func (p *MISCParams) SetSyncSourceCheckerInterval(d time.Duration) error {
+	return p.SetDuration(d, func(d time.Duration) (bool, error) {
+		if p.syncSourceCheckerInterval == d {
+			return false, nil
+		}
+
+		p.syncSourceCheckerInterval = d
+
+		return true, nil
+	})
+}
+
+// ValidProposalOperationExpire is the maximum creation time for valid
+// operation. If the creation time of operation is older than
+// ValidProposalOperationExpire, it will be ignored.
+func (p *MISCParams) ValidProposalOperationExpire() time.Duration {
+	p.RLock()
+	defer p.RUnlock()
+
+	return p.validProposalOperationExpire
+}
+
+func (p *MISCParams) SetValidProposalOperationExpire(d time.Duration) error {
+	return p.SetDuration(d, func(d time.Duration) (bool, error) {
+		if p.validProposalOperationExpire == d {
+			return false, nil
+		}
+
+		p.validProposalOperationExpire = d
+
+		return true, nil
+	})
+}
+
+// ValidProposalSuffrageOperationsExpire is the maximum creation time for valid
+// suffrage operations like isaacoperation.SuffrageCandidate operation. If the
+// creation time of suffrage operation is older than
+// ValidProposalSuffrageOperationsExpire, it will be ignored.
+func (p *MISCParams) ValidProposalSuffrageOperationsExpire() time.Duration {
+	p.RLock()
+	defer p.RUnlock()
+
+	return p.validProposalSuffrageOperationsExpire
+}
+
+func (p *MISCParams) SetValidProposalSuffrageOperationsExpire(d time.Duration) error {
+	return p.SetDuration(d, func(d time.Duration) (bool, error) {
+		if p.validProposalSuffrageOperationsExpire == d {
+			return false, nil
+		}
+
+		p.validProposalSuffrageOperationsExpire = d
+
+		return true, nil
+	})
+}
+
+// BlockItemReadersRemoveEmptyAfter removes empty block item directory after
+// the duration. Zero duration not allowed.
+func (p *MISCParams) BlockItemReadersRemoveEmptyAfter() time.Duration {
+	p.RLock()
+	defer p.RUnlock()
+
+	return p.blockItemReadersRemoveEmptyAfter
+}
+
+func (p *MISCParams) SetBlockItemReadersRemoveEmptyAfter(d time.Duration) error {
+	return p.SetDuration(d, func(d time.Duration) (bool, error) {
+		if p.blockItemReadersRemoveEmptyAfter == d {
+			return false, nil
+		}
+
+		p.blockItemReadersRemoveEmptyAfter = d
+
+		return true, nil
+	})
+}
+
+// BlockItemReadersRemoveEmptyInterval is the interval to remove empty block
+// item directory after BlockItemReadersRemoveEmptyAfter. Zero duration not
+// allowed.
+func (p *MISCParams) BlockItemReadersRemoveEmptyInterval() time.Duration {
+	p.RLock()
+	defer p.RUnlock()
+
+	return p.blockItemReadersRemoveEmptyInterval
+}
+
+func (p *MISCParams) SetBlockItemReadersRemoveEmptyInterval(d time.Duration) error {
+	return p.SetDuration(d, func(d time.Duration) (bool, error) {
+		if p.blockItemReadersRemoveEmptyInterval == d {
+			return false, nil
+		}
+
+		p.blockItemReadersRemoveEmptyInterval = d
+
+		return true, nil
+	})
+}
+
+// MaxMessageSize is the maximum size of incoming messages like ballot or
+// operation. If message size is over, it will be ignored.
+func (p *MISCParams) MaxMessageSize() uint64 {
+	p.RLock()
+	defer p.RUnlock()
+
+	return p.maxMessageSize
+}
+
+func (p *MISCParams) SetMaxMessageSize(d uint64) error {
+	return p.SetUint64(d, func(d uint64) (bool, error) {
+		if p.maxMessageSize == d {
+			return false, nil
+		}
+
+		p.maxMessageSize = d
+
+		return true, nil
+	})
+}
+
+// ObjectCacheSize is the cache size for various internal objects like address
+// or keypair.
+func (p *MISCParams) ObjectCacheSize() uint64 {
+	p.RLock()
+	defer p.RUnlock()
+
+	return p.objectCacheSize
+}
+
+func (p *MISCParams) SetObjectCacheSize(d uint64) error {
+	return p.SetUint64(d, func(d uint64) (bool, error) {
+		if p.objectCacheSize == d {
+			return false, nil
+		}
+
+		p.objectCacheSize = d
+
+		return true, nil
+	})
+}
+
+type miscParamsYAMLMarshaler struct {
+	//revive:disable:line-length-limit
+	hint.BaseHinter
+	SyncSourceCheckerInterval             util.ReadableDuration `json:"sync_source_checker_interval,omitempty" yaml:"sync_source_checker_interval,omitempty"`
+	ValidProposalOperationExpire          util.ReadableDuration `json:"valid_proposal_operation_expire,omitempty" yaml:"valid_proposal_operation_expire,omitempty"`
+	ValidProposalSuffrageOperationsExpire util.ReadableDuration `json:"valid_proposal_suffrage_operations_expire,omitempty" yaml:"valid_proposal_suffrage_operations_expire,omitempty"`
+	BlockItemReadersRemoveEmptyAfter      util.ReadableDuration `json:"block_item_readers_remove_empty_after,omitempty" yaml:"block_item_readers_remove_empty_after,omitempty"`
+	BlockItemReadersRemoveEmptyInterval   util.ReadableDuration `json:"block_item_readers_remove_empty_interval,omitempty" yaml:"block_item_readers_remove_empty_interval,omitempty"`
+	MaxMessageSize                        uint64                `json:"max_message_size,omitempty" yaml:"max_message_size,omitempty"`
+	ObjectCacheSize                       uint64                `json:"object_cache_size,omitempty" yaml:"object_cache_size,omitempty"`
+	//revive:enable:line-length-limit
+}
+
+func (p *MISCParams) marshaler() miscParamsYAMLMarshaler {
+	return miscParamsYAMLMarshaler{
+		BaseHinter:                            p.BaseHinter,
+		SyncSourceCheckerInterval:             util.ReadableDuration(p.syncSourceCheckerInterval),
+		ValidProposalOperationExpire:          util.ReadableDuration(p.validProposalOperationExpire),
+		ValidProposalSuffrageOperationsExpire: util.ReadableDuration(p.validProposalSuffrageOperationsExpire),
+		BlockItemReadersRemoveEmptyAfter:      util.ReadableDuration(p.blockItemReadersRemoveEmptyAfter),
+		BlockItemReadersRemoveEmptyInterval:   util.ReadableDuration(p.blockItemReadersRemoveEmptyInterval),
+		MaxMessageSize:                        p.maxMessageSize,
+		ObjectCacheSize:                       p.objectCacheSize,
+	}
+}
+
+func (p *MISCParams) MarshalJSON() ([]byte, error) {
+	return util.MarshalJSON(p.marshaler())
+}
+
+func (p *MISCParams) MarshalYAML() (interface{}, error) {
+	return p.marshaler(), nil
+}
+
+type miscParamsYAMLUnmarshaler struct {
+	//revive:disable:line-length-limit
+	SyncSourceCheckerInterval             *util.ReadableDuration `json:"sync_source_checker_interval,omitempty" yaml:"sync_source_checker_interval,omitempty"`
+	ValidProposalOperationExpire          *util.ReadableDuration `json:"valid_proposal_operation_expire,omitempty" yaml:"valid_proposal_operation_expire,omitempty"`
+	ValidProposalSuffrageOperationsExpire *util.ReadableDuration `json:"valid_proposal_suffrage_operations_expire,omitempty" yaml:"valid_proposal_suffrage_operations_expire,omitempty"`
+	BlockItemReadersRemoveEmptyAfter      *util.ReadableDuration `json:"block_item_readers_remove_empty_after,omitempty" yaml:"block_item_readers_remove_empty_after,omitempty"`
+	BlockItemReadersRemoveEmptyInterval   *util.ReadableDuration `json:"block_item_readers_remove_empty_interval,omitempty" yaml:"block_item_readers_remove_empty_interval,omitempty"`
+	MaxMessageSize                        *uint64                `json:"max_message_size,omitempty" yaml:"max_message_size,omitempty"`
+	ObjectCacheSize                       *uint64                `json:"object_cache_size,omitempty" yaml:"object_cache_size,omitempty"`
+	hint.BaseHinter
+	//revive:enable:line-length-limit
+}
+
+func (p *MISCParams) UnmarshalJSON(b []byte) error {
+	d := DefaultMISCParams()
+	*p = *d
+
+	e := util.StringError("decode MISCParams")
+
+	var u miscParamsYAMLUnmarshaler
+
+	if err := util.UnmarshalJSON(b, &u); err != nil {
+		return e.Wrap(err)
+	}
+	p.BaseHinter = u.BaseHinter
+
+	return e.Wrap(p.unmarshal(u))
+}
+
+func (p *MISCParams) UnmarshalYAML(y *yaml.Node) error {
+	d := DefaultMISCParams()
+	*p = *d
+
+	e := util.StringError("decode MISCParams")
+
+	var u miscParamsYAMLUnmarshaler
+
+	if err := y.Decode(&u); err != nil {
+		return e.Wrap(err)
+	}
+
+	return e.Wrap(p.unmarshal(u))
+}
+
+func (p *MISCParams) unmarshal(u miscParamsYAMLUnmarshaler) error {
+	if u.MaxMessageSize != nil {
+		p.maxMessageSize = *u.MaxMessageSize
+	}
+
+	if u.ObjectCacheSize != nil {
+		p.objectCacheSize = *u.ObjectCacheSize
+	}
+
+	durargs := [][2]interface{}{
+		{u.SyncSourceCheckerInterval, &p.syncSourceCheckerInterval},
+		{u.ValidProposalOperationExpire, &p.validProposalOperationExpire},
+		{u.ValidProposalSuffrageOperationsExpire, &p.validProposalSuffrageOperationsExpire},
+		{u.BlockItemReadersRemoveEmptyAfter, &p.blockItemReadersRemoveEmptyAfter},
+		{u.BlockItemReadersRemoveEmptyInterval, &p.blockItemReadersRemoveEmptyInterval},
+	}
+
+	for i := range durargs {
+		v := durargs[i][0].(*util.ReadableDuration) //nolint:forcetypeassert //...
+		t := durargs[i][1].(*time.Duration)         //nolint:forcetypeassert //...
+
+		if reflect.ValueOf(v).IsZero() {
+			continue
+		}
+
+		if err := util.SetInterfaceValue(time.Duration(*v), t); err != nil {
+			return err
+		}
 	}
 
 	return nil

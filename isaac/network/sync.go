@@ -12,9 +12,9 @@ import (
 
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
-	"github.com/ProtoconNet/mitum2/network"
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
+	nutil "github.com/ProtoconNet/mitum2/network/util"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/logging"
@@ -362,7 +362,7 @@ func (c *SyncSourceChecker) fetchFromURL(ctx context.Context, u *url.URL) ([]isa
 	httpclient := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: network.HasTLSInsecure(u.Fragment, network.DefaultTLSInsecureFlag),
+				InsecureSkipVerify: nutil.HasTLSInsecure(u.Fragment, nutil.DefaultTLSInsecureFlag),
 			},
 		},
 	}

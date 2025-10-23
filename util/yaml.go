@@ -3,11 +3,12 @@ package util
 import (
 	"bytes"
 	"fmt"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 	"os"
 	"reflect"
 	"regexp"
+
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 type YAMLOrderedMap struct {

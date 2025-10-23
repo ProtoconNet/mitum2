@@ -5,13 +5,47 @@ import (
 
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
-	"github.com/ProtoconNet/mitum2/network"
 	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
+	nutil "github.com/ProtoconNet/mitum2/network/util"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
+
+type syncSourceNodeMarshaler struct {
+	Type        string `yaml:"type"`
+	Address     string `yaml:"address"`
+	PublicKey   string `yaml:"publickey"`
+	Publish     string `yaml:"publish"`
+	TLSInsecure bool   `yaml:"tls_insecure"`
+}
+
+type syncSourceConnInfoMarshaler struct {
+	Type        string `yaml:"type"`
+	Publish     string `yaml:"publish"`
+	TLSInsecure bool   `yaml:"tls_insecure"`
+}
+
+func (p *SyncSource) MarshalYAML() (interface{}, error) {
+	switch t := p.Source.(type) {
+	case isaac.NodeConnInfo:
+		return syncSourceNodeMarshaler{
+			Type:        string(p.Type),
+			Address:     t.Address().String(),
+			PublicKey:   t.Publickey().String(),
+			Publish:     t.ConnInfo().UDPAddr().String(),
+			TLSInsecure: t.TLSInsecure(),
+		}, nil
+	case quicmemberlist.NamedConnInfo:
+		return syncSourceConnInfoMarshaler{
+			Type:        string(p.Type),
+			Publish:     t.ConnInfo().UDPAddr().String(),
+			TLSInsecure: t.TLSInsecure(),
+		}, nil
+	}
+	return nil, errors.Errorf("Unknown type: %s", p.Type)
+}
 
 func (d *SyncSource) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
 	e := util.StringError("decode SyncSource")
@@ -107,8 +141,8 @@ func (d *SyncSource) decodeYAMLMap(t string, b []byte, jsonencoder encoder.Encod
 }
 
 type syncSourceNodeUnmarshaler struct {
-	Address     string
-	Publickey   string
+	Address     string `yaml:"address"`
+	Publickey   string `yaml:"publickey"`
 	Publish     string `yaml:"publish"`
 	TLSInsecure bool   `yaml:"tls_insecure"`
 }
@@ -132,7 +166,7 @@ func (SyncSource) decodeYAMLNodeConnInfo(b []byte, jsonencoder encoder.Encoder) 
 		return nil, e.Wrap(err)
 	}
 
-	if err := network.IsValidAddr(u.Publish); err != nil {
+	if err := nutil.IsValidAddr(u.Publish); err != nil {
 		return nil, e.Wrap(err)
 	}
 
@@ -155,7 +189,7 @@ func (SyncSource) decodeYAMLConnInfo(
 		return ci, e.Wrap(err)
 	}
 
-	if err := network.IsValidAddr(u.Publish); err != nil {
+	if err := nutil.IsValidAddr(u.Publish); err != nil {
 		return ci, e.Wrap(err)
 	}
 

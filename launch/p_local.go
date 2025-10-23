@@ -11,10 +11,11 @@ import (
 )
 
 var (
-	PNameLocal            = ps.Name("local")
-	LocalContextKey       = util.ContextKey("local")
-	LocalParamsContextKey = util.ContextKey("local-params")
-	ISAACParamsContextKey = util.ContextKey("isaac-params")
+	PNameLocal                 = ps.Name("local")
+	LocalContextKey            = util.ContextKey("local")
+	LocalParamsContextKey      = util.ContextKey("local-params")
+	ISAACParamsContextKey      = util.ContextKey("isaac-params")
+	MemberlistParamsContextKey = util.ContextKey("memberlist-params")
 )
 
 func PLocal(pctx context.Context) (context.Context, error) {

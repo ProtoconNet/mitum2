@@ -32,14 +32,15 @@ type DefaultBallotStuckResolver struct {
 	voteSuffrageVotingf    func(context.Context, base.StagePoint, []base.Address) (base.Voteproof, error)
 	vpch                   chan base.Voteproof
 	point                  base.StagePoint
-	initialWait            time.Duration
+	initialWait            func() time.Duration
 	interval               time.Duration
-	resolveAfter           time.Duration
+	resolveAfter           func() time.Duration
 }
 
 func NewDefaultBallotStuckResolver(
-	initialWait,
-	interval, resolveAfter time.Duration,
+	initialWait func() time.Duration,
+	interval time.Duration,
+	resolveAfter func() time.Duration,
 	findMissingBallotsf func(context.Context, base.StagePoint, bool) ([]base.Address, bool, error),
 	requestMissingBallotsf func(context.Context, base.StagePoint, []base.Address) error,
 	voteSuffrageVotingf func(context.Context, base.StagePoint, []base.Address) (base.Voteproof, error),
@@ -76,7 +77,7 @@ func (c *DefaultBallotStuckResolver) NewPoint(ctx context.Context, point base.St
 			previous() // NOTE cancel previous wait
 		}
 
-		wctx, wcancel := context.WithTimeout(ctx, c.initialWait)
+		wctx, wcancel := context.WithTimeout(ctx, c.initialWait())
 		sctx, cancel := context.WithCancel(ctx)
 
 		l := c.Log().With().Interface("point", point).Logger()
@@ -151,8 +152,8 @@ func (c *DefaultBallotStuckResolver) SetLogging(l *logging.Logging) *logging.Log
 	_ = c.Logging.SetLogging(l)
 
 	c.Log().Debug().
-		Stringer("initial_wait", c.initialWait).
-		Stringer("resolve_after", c.resolveAfter).
+		Stringer("initial_wait", c.initialWait()).
+		Stringer("resolve_after", c.resolveAfter()).
 		Stringer("interval", c.interval).
 		Msg("resolver started")
 
@@ -167,7 +168,7 @@ func (c *DefaultBallotStuckResolver) start(ctx context.Context, point base.Stage
 	ticker := time.NewTicker(c.interval)
 	defer ticker.Stop()
 
-	resolveAfterch := time.After(c.resolveAfter)
+	resolveAfterch := time.After(c.resolveAfter())
 
 	var count int
 

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ProtoconNet/mitum2/isaac"
+	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/network/quicstream"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -49,10 +50,10 @@ func (p *LocalParams) MarshalYAML() (interface{}, error) {
 }
 
 type LocalParamsYAMLUnmarshaler struct {
-	ISAAC      map[string]interface{} `yaml:"isaac"`
-	Memberlist *MemberlistParams      `yaml:"memberlist,omitempty"`
-	MISC       *MISCParams            `yaml:"misc,omitempty"`
-	Network    *NetworkParams         `yaml:"network,omitempty"`
+	ISAAC      map[string]interface{}           `yaml:"isaac"`
+	Memberlist *quicmemberlist.MemberlistParams `yaml:"memberlist,omitempty"`
+	MISC       *isaac.MISCParams                `yaml:"misc,omitempty"`
+	Network    *NetworkParams                   `yaml:"network,omitempty"`
 }
 
 func (p *LocalParams) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
@@ -60,7 +61,7 @@ func (p *LocalParams) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
 		return nil
 	}
 
-	e := util.StringError("decode LocalParams")
+	e := util.StringError("decode IsaacParams")
 
 	nb, err := util.ReplaceEnvVariables(b)
 	if err != nil {
@@ -98,255 +99,6 @@ func (p *LocalParams) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
 
 	if u.Network != nil {
 		p.Network = u.Network
-	}
-
-	return nil
-}
-
-type memberlistParamsMarshaler struct {
-	//revive:disable:line-length-limit
-	TCPTimeout              util.ReadableDuration `json:"tcp_timeout,omitempty" yaml:"tcp_timeout,omitempty"`
-	RetransmitMult          int                   `json:"retransmit_mult,omitempty" yaml:"retransmit_mult,omitempty"`
-	ProbeTimeout            util.ReadableDuration `json:"probe_timeout,omitempty" yaml:"probe_timeout,omitempty"`
-	ProbeInterval           util.ReadableDuration `json:"probe_interval,omitempty" yaml:"probe_interval,omitempty"`
-	GossipInterval          util.ReadableDuration `json:"gossip_interval,omitempty" yaml:"gossip_interval,omitempty"`
-	GosshipNodes            int                   `json:"gossip_nodes,omitempty" yaml:"gossip_nodes,omitempty"`
-	SuspicionMult           int                   `json:"suspicion_mult,omitempty" yaml:"suspicion_mult,omitempty"`
-	SuspicionMaxTimeoutMult int                   `json:"suspicion_max_timeout_mult,omitempty" yaml:"suspicion_max_timeout_mult,omitempty"`
-	UDPBufferSize           int                   `json:"udp_buffer_size,omitempty" yaml:"udp_buffer_size,omitempty"`
-	ExtraSameMemberLimit    uint64                `json:"extra_same_member_limit,omitempty" yaml:"extra_same_member_limit,omitempty"`
-	BroadcastTimerMult      int                   `json:"broadcast_timer_mult,omitempty" yaml:"broadcast_timer_mult,omitempty"`
-	UserMsgLoopInterval     util.ReadableDuration `json:"user_msg_loop_interval,omitempty" yaml:"user_msg_loop_interval,omitempty"`
-	//revive:enable:line-length-limit
-}
-
-func (p *MemberlistParams) marshaler() memberlistParamsMarshaler {
-	return memberlistParamsMarshaler{
-		TCPTimeout:              util.ReadableDuration(p.tcpTimeout),
-		RetransmitMult:          p.retransmitMult,
-		ProbeTimeout:            util.ReadableDuration(p.probeTimeout),
-		ProbeInterval:           util.ReadableDuration(p.probeInterval),
-		GossipInterval:          util.ReadableDuration(p.gossipInterval),
-		GosshipNodes:            p.gosshipNodes,
-		SuspicionMult:           p.suspicionMult,
-		SuspicionMaxTimeoutMult: p.suspicionMaxTimeoutMult,
-		UDPBufferSize:           p.udpBufferSize,
-		ExtraSameMemberLimit:    p.extraSameMemberLimit,
-		BroadcastTimerMult:      p.broadcastTimerMult,
-		UserMsgLoopInterval:     util.ReadableDuration(p.userMsgLoopInterval),
-	}
-}
-
-func (p *MemberlistParams) MarshalJSON() ([]byte, error) {
-	return util.MarshalJSON(p.marshaler())
-}
-
-func (p *MemberlistParams) MarshalYAML() (interface{}, error) {
-	return p.marshaler(), nil
-}
-
-type memberlistParamsUnmarshaler struct {
-	//revive:disable:line-length-limit
-	TCPTimeout              *util.ReadableDuration `json:"tcp_timeout,omitempty" yaml:"tcp_timeout,omitempty"`
-	RetransmitMult          *int                   `json:"retransmit_mult,omitempty" yaml:"retransmit_mult,omitempty"`
-	ProbeTimeout            *util.ReadableDuration `json:"probe_timeout,omitempty" yaml:"probe_timeout,omitempty"`
-	ProbeInterval           *util.ReadableDuration `json:"probe_interval,omitempty" yaml:"probe_interval,omitempty"`
-	GossipInterval          *util.ReadableDuration `json:"gossip_interval,omitempty" yaml:"gossip_interval,omitempty"`
-	GosshipNodes            *int                   `json:"gossip_nodes,omitempty" yaml:"gossip_nodes,omitempty"`
-	SuspicionMult           *int                   `json:"suspicion_mult,omitempty" yaml:"suspicion_mult,omitempty"`
-	SuspicionMaxTimeoutMult *int                   `json:"suspicion_max_timeout_mult,omitempty" yaml:"suspicion_max_timeout_mult,omitempty"`
-	UDPBufferSize           *int                   `json:"udp_buffer_size,omitempty" yaml:"udp_buffer_size,omitempty"`
-	ExtraSameMemberLimit    *uint64                `json:"extra_same_member_limit,omitempty" yaml:"extra_same_member_limit,omitempty"`
-	BroadcastTimerMult      *int                   `json:"broadcast_timer_mult,omitempty" yaml:"broadcast_timer_mult,omitempty"`
-	UserMsgLoopInterval     *util.ReadableDuration `json:"user_msg_loop_interval,omitempty" yaml:"user_msg_loop_interval,omitempty"`
-	//revive:enable:line-length-limit
-}
-
-func (p *MemberlistParams) UnmarshalJSON(b []byte) error {
-	d := defaultMemberlistParams()
-	*p = *d
-
-	e := util.StringError("unmarshal MemberlistParams")
-
-	var u memberlistParamsUnmarshaler
-
-	if err := util.UnmarshalJSON(b, &u); err != nil {
-		return e.Wrap(err)
-	}
-
-	return e.Wrap(p.unmarshal(u))
-}
-
-func (p *MemberlistParams) UnmarshalYAML(y *yaml.Node) error {
-	d := defaultMemberlistParams()
-	*p = *d
-
-	e := util.StringError("unmarshal MemberlistParams")
-
-	var u memberlistParamsUnmarshaler
-
-	if err := y.Decode(&u); err != nil {
-		return e.Wrap(err)
-	}
-
-	return e.Wrap(p.unmarshal(u))
-}
-
-func (p *MemberlistParams) unmarshal(u memberlistParamsUnmarshaler) error {
-	if u.RetransmitMult != nil {
-		p.retransmitMult = *u.RetransmitMult
-	}
-
-	if u.SuspicionMult != nil {
-		p.suspicionMult = *u.SuspicionMult
-	}
-
-	if u.SuspicionMaxTimeoutMult != nil {
-		p.suspicionMaxTimeoutMult = *u.SuspicionMaxTimeoutMult
-	}
-
-	if u.UDPBufferSize != nil {
-		p.udpBufferSize = *u.UDPBufferSize
-	}
-
-	if u.ExtraSameMemberLimit != nil {
-		p.extraSameMemberLimit = *u.ExtraSameMemberLimit
-	}
-
-	if u.BroadcastTimerMult != nil {
-		p.broadcastTimerMult = *u.BroadcastTimerMult
-	}
-
-	if u.GosshipNodes != nil {
-		p.gosshipNodes = *u.GosshipNodes
-	}
-
-	durargs := [][2]interface{}{
-		{u.TCPTimeout, &p.tcpTimeout},
-		{u.ProbeTimeout, &p.probeTimeout},
-		{u.ProbeInterval, &p.probeInterval},
-		{u.GossipInterval, &p.gossipInterval},
-		{u.UserMsgLoopInterval, &p.userMsgLoopInterval},
-	}
-
-	for i := range durargs {
-		v := durargs[i][0].(*util.ReadableDuration) //nolint:forcetypeassert //...
-		t := durargs[i][1].(*time.Duration)         //nolint:forcetypeassert //...
-
-		if reflect.ValueOf(v).IsZero() {
-			continue
-		}
-
-		if err := util.SetInterfaceValue[time.Duration](time.Duration(*v), t); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-type miscParamsYAMLMarshaler struct {
-	//revive:disable:line-length-limit
-	SyncSourceCheckerInterval             util.ReadableDuration `json:"sync_source_checker_interval,omitempty" yaml:"sync_source_checker_interval,omitempty"`
-	ValidProposalOperationExpire          util.ReadableDuration `json:"valid_proposal_operation_expire,omitempty" yaml:"valid_proposal_operation_expire,omitempty"`
-	ValidProposalSuffrageOperationsExpire util.ReadableDuration `json:"valid_proposal_suffrage_operations_expire,omitempty" yaml:"valid_proposal_suffrage_operations_expire,omitempty"`
-	BlockItemReadersRemoveEmptyAfter      util.ReadableDuration `json:"block_item_readers_remove_empty_after,omitempty" yaml:"block_item_readers_remove_empty_after,omitempty"`
-	BlockItemReadersRemoveEmptyInterval   util.ReadableDuration `json:"block_item_readers_remove_empty_interval,omitempty" yaml:"block_item_readers_remove_empty_interval,omitempty"`
-	MaxMessageSize                        uint64                `json:"max_message_size,omitempty" yaml:"max_message_size,omitempty"`
-	ObjectCacheSize                       uint64                `json:"object_cache_size,omitempty" yaml:"object_cache_size,omitempty"`
-	//revive:enable:line-length-limit
-}
-
-func (p *MISCParams) marshaler() miscParamsYAMLMarshaler {
-	return miscParamsYAMLMarshaler{
-		SyncSourceCheckerInterval:             util.ReadableDuration(p.syncSourceCheckerInterval),
-		ValidProposalOperationExpire:          util.ReadableDuration(p.validProposalOperationExpire),
-		ValidProposalSuffrageOperationsExpire: util.ReadableDuration(p.validProposalSuffrageOperationsExpire),
-		BlockItemReadersRemoveEmptyAfter:      util.ReadableDuration(p.blockItemReadersRemoveEmptyAfter),
-		BlockItemReadersRemoveEmptyInterval:   util.ReadableDuration(p.blockItemReadersRemoveEmptyInterval),
-		MaxMessageSize:                        p.maxMessageSize,
-		ObjectCacheSize:                       p.objectCacheSize,
-	}
-}
-
-func (p *MISCParams) MarshalJSON() ([]byte, error) {
-	return util.MarshalJSON(p.marshaler())
-}
-
-func (p *MISCParams) MarshalYAML() (interface{}, error) {
-	return p.marshaler(), nil
-}
-
-type miscParamsYAMLUnmarshaler struct {
-	//revive:disable:line-length-limit
-	SyncSourceCheckerInterval             *util.ReadableDuration `json:"sync_source_checker_interval,omitempty" yaml:"sync_source_checker_interval,omitempty"`
-	ValidProposalOperationExpire          *util.ReadableDuration `json:"valid_proposal_operation_expire,omitempty" yaml:"valid_proposal_operation_expire,omitempty"`
-	ValidProposalSuffrageOperationsExpire *util.ReadableDuration `json:"valid_proposal_suffrage_operations_expire,omitempty" yaml:"valid_proposal_suffrage_operations_expire,omitempty"`
-	BlockItemReadersRemoveEmptyAfter      *util.ReadableDuration `json:"block_item_readers_remove_empty_after,omitempty" yaml:"block_item_readers_remove_empty_after,omitempty"`
-	BlockItemReadersRemoveEmptyInterval   *util.ReadableDuration `json:"block_item_readers_remove_empty_interval,omitempty" yaml:"block_item_readers_remove_empty_interval,omitempty"`
-	MaxMessageSize                        *uint64                `json:"max_message_size,omitempty" yaml:"max_message_size,omitempty"`
-	ObjectCacheSize                       *uint64                `json:"object_cache_size,omitempty" yaml:"object_cache_size,omitempty"`
-	//revive:enable:line-length-limit
-}
-
-func (p *MISCParams) UnmarshalJSON(b []byte) error {
-	d := defaultMISCParams()
-	*p = *d
-
-	e := util.StringError("decode MISCParams")
-
-	var u miscParamsYAMLUnmarshaler
-
-	if err := util.UnmarshalJSON(b, &u); err != nil {
-		return e.Wrap(err)
-	}
-
-	return e.Wrap(p.unmarshal(u))
-}
-
-func (p *MISCParams) UnmarshalYAML(y *yaml.Node) error {
-	d := defaultMISCParams()
-	*p = *d
-
-	e := util.StringError("decode MISCParams")
-
-	var u miscParamsYAMLUnmarshaler
-
-	if err := y.Decode(&u); err != nil {
-		return e.Wrap(err)
-	}
-
-	return e.Wrap(p.unmarshal(u))
-}
-
-func (p *MISCParams) unmarshal(u miscParamsYAMLUnmarshaler) error {
-	if u.MaxMessageSize != nil {
-		p.maxMessageSize = *u.MaxMessageSize
-	}
-
-	if u.ObjectCacheSize != nil {
-		p.objectCacheSize = *u.ObjectCacheSize
-	}
-
-	durargs := [][2]interface{}{
-		{u.SyncSourceCheckerInterval, &p.syncSourceCheckerInterval},
-		{u.ValidProposalOperationExpire, &p.validProposalOperationExpire},
-		{u.ValidProposalSuffrageOperationsExpire, &p.validProposalSuffrageOperationsExpire},
-		{u.BlockItemReadersRemoveEmptyAfter, &p.blockItemReadersRemoveEmptyAfter},
-		{u.BlockItemReadersRemoveEmptyInterval, &p.blockItemReadersRemoveEmptyInterval},
-	}
-
-	for i := range durargs {
-		v := durargs[i][0].(*util.ReadableDuration) //nolint:forcetypeassert //...
-		t := durargs[i][1].(*time.Duration)         //nolint:forcetypeassert //...
-
-		if reflect.ValueOf(v).IsZero() {
-			continue
-		}
-
-		if err := util.SetInterfaceValue(time.Duration(*v), t); err != nil {
-			return err
-		}
 	}
 
 	return nil

@@ -73,7 +73,6 @@ func newProposalProcessorFunc(pctx context.Context) (
 	var encs *encoder.Encoders
 	var design NodeDesign
 	var local base.LocalNode
-	var isaacparams *isaac.Params
 	var db isaac.Database
 	var oprs *hint.CompatibleSet[isaac.NewOperationProcessorInternalFunc]
 
@@ -81,7 +80,6 @@ func newProposalProcessorFunc(pctx context.Context) (
 		EncodersContextKey, &encs,
 		DesignContextKey, &design,
 		LocalContextKey, &local,
-		ISAACParamsContextKey, &isaacparams,
 		CenterDatabaseContextKey, &db,
 		OperationProcessorsMapContextKey, &oprs,
 	); err != nil {
@@ -100,13 +98,13 @@ func newProposalProcessorFunc(pctx context.Context) (
 		args.MaxWorkerSize = math.MaxInt16
 		args.NewWriterFunc = NewBlockWriterFunc(
 			local,
-			isaacparams.NetworkID(),
+			design.LocalParams.ISAAC.NetworkID(),
 			LocalFSDataDirectory(design.Storage.Base),
 			encs.JSON(),
 			encs.Default(),
 			db,
 			args.MaxWorkerSize,
-			isaacparams.StateCacheSize(),
+			design.LocalParams.ISAAC.StateCacheSize(),
 		)
 		args.GetStateFunc = db.State
 		args.GetOperationFunc = getProposalOperationFuncf(proposal)

@@ -7,6 +7,7 @@ import (
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
 	isaacstates "github.com/ProtoconNet/mitum2/isaac/states"
+	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/localtime"
@@ -16,16 +17,18 @@ import (
 var NodeInfoHint = hint.MustNewHint("node-info-v0.0.1")
 
 type NodeInfo struct {
-	lastVote       NodeInfoLastVote
-	networkID      base.NetworkID
-	address        base.Address
-	publickey      base.Publickey
-	lastManifest   base.Manifest
-	networkPolicy  base.NetworkPolicy
-	localParams    *isaac.Params
-	connInfo       string
-	consensusState isaacstates.StateType
-	consensusNodes []base.Node
+	lastVote         NodeInfoLastVote
+	networkID        base.NetworkID
+	address          base.Address
+	publickey        base.Publickey
+	lastManifest     base.Manifest
+	networkPolicy    base.NetworkPolicy
+	isaacParams      *isaac.Params
+	memberlistParams *quicmemberlist.MemberlistParams
+	miscParams       *isaac.MISCParams
+	connInfo         string
+	consensusState   isaacstates.StateType
+	consensusNodes   []base.Node
 	hint.BaseHinter
 	startedAt      time.Time
 	version        util.Version
@@ -40,7 +43,9 @@ func (info NodeInfo) IsValid(networkID base.NetworkID) error {
 		info.lastManifest,
 		info.suffrageHeight,
 		info.networkPolicy,
-		info.localParams,
+		info.isaacParams,
+		info.memberlistParams,
+		info.miscParams,
 		util.DummyIsValider(func([]byte) error {
 			if len(info.connInfo) < 1 {
 				return errors.Errorf("empty conn info")
@@ -87,8 +92,16 @@ func (info NodeInfo) NetworkPolicy() base.NetworkPolicy {
 	return info.networkPolicy
 }
 
-func (info NodeInfo) LocalParams() *isaac.Params {
-	return info.localParams
+func (info NodeInfo) IsaacParams() *isaac.Params {
+	return info.isaacParams
+}
+
+func (info NodeInfo) MemberlistParams() *quicmemberlist.MemberlistParams {
+	return info.memberlistParams
+}
+
+func (info NodeInfo) MISCParams() *isaac.MISCParams {
+	return info.miscParams
 }
 
 func (info NodeInfo) ConnInfo() string {
@@ -200,16 +213,44 @@ func (info *NodeInfoUpdater) SetNetworkPolicy(p base.NetworkPolicy) bool {
 	})
 }
 
-func (info *NodeInfoUpdater) SetLocalParams(p *isaac.Params) bool {
+func (info *NodeInfoUpdater) SetIsaacParams(p *isaac.Params) bool {
 	return info.set(func() bool {
 		switch {
-		case info.n.localParams == nil, p == nil:
-		case info.n.localParams.ID() == p.ID():
+		case info.n.isaacParams == nil, p == nil:
+		case info.n.isaacParams.ID() == p.ID():
 			return false
 		}
 
-		info.n.localParams = p
+		info.n.isaacParams = p
 		info.n.networkID = p.NetworkID()
+
+		return true
+	})
+}
+
+func (info *NodeInfoUpdater) SetMemberlistParams(p *quicmemberlist.MemberlistParams) bool {
+	return info.set(func() bool {
+		switch {
+		case info.n.memberlistParams == nil, p == nil:
+		case info.n.memberlistParams.ID() == p.ID():
+			return false
+		}
+
+		info.n.memberlistParams = p
+
+		return true
+	})
+}
+
+func (info *NodeInfoUpdater) SetMISCParams(p *isaac.MISCParams) bool {
+	return info.set(func() bool {
+		switch {
+		case info.n.miscParams == nil, p == nil:
+		case info.n.miscParams.ID() == p.ID():
+			return false
+		}
+
+		info.n.miscParams = p
 
 		return true
 	})

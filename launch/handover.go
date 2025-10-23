@@ -352,7 +352,7 @@ func attachStartHandoverHandler(
 
 	var aclallow ACLAllowFunc
 
-	switch i, err := pACLAllowFunc(pctx); {
+	switch i, err := PACLAllowFunc(pctx); {
 	case err != nil:
 		return err
 	default:
@@ -420,7 +420,7 @@ func attachCancelHandoverHandler(
 
 	var aclallow ACLAllowFunc
 
-	switch i, err := pACLAllowFunc(pctx); {
+	switch i, err := PACLAllowFunc(pctx); {
 	case err != nil:
 		return err
 	default:
@@ -481,7 +481,7 @@ func attachCheckHandoverHandler(
 
 	var aclallow ACLAllowFunc
 
-	switch i, err := pACLAllowFunc(pctx); {
+	switch i, err := PACLAllowFunc(pctx); {
 	case err != nil:
 		return err
 	default:

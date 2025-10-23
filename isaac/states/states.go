@@ -109,8 +109,8 @@ func NewStates(networkID base.NetworkID, local base.LocalNode, args *StatesArgs)
 
 			return nil
 		},
-		st.args.IntervalBroadcastBallot(),
-		st.args.BroadcastTimerMult(),
+		st.args.IntervalBroadcastBallot,
+		st.args.BroadcastTimerMult,
 	)
 
 	if st.args.Ballotbox != nil {

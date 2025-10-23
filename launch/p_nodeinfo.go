@@ -7,7 +7,7 @@ import (
 	"github.com/ProtoconNet/mitum2/isaac"
 	isaacnetwork "github.com/ProtoconNet/mitum2/isaac/network"
 	isaacstates "github.com/ProtoconNet/mitum2/isaac/states"
-	"github.com/ProtoconNet/mitum2/network"
+	nutil "github.com/ProtoconNet/mitum2/network/util"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/logging"
 	"github.com/ProtoconNet/mitum2/util/ps"
@@ -20,12 +20,11 @@ var (
 )
 
 func PNodeInfo(pctx context.Context) (context.Context, error) {
-	e := util.StringError("prepare nodeinfo")
+	e := util.StringError("prepare nodeInfo")
 
 	var log *logging.Logging
 	var version util.Version
 	var local base.LocalNode
-	var isaacparams *isaac.Params
 	var design NodeDesign
 	var db isaac.Database
 
@@ -34,28 +33,30 @@ func PNodeInfo(pctx context.Context) (context.Context, error) {
 		VersionContextKey, &version,
 		DesignContextKey, &design,
 		LocalContextKey, &local,
-		ISAACParamsContextKey, &isaacparams,
 		CenterDatabaseContextKey, &db,
 	); err != nil {
 		return pctx, e.Wrap(err)
 	}
 
-	nodeinfo := isaacnetwork.NewNodeInfoUpdater(design.NetworkID, local, version)
-	_ = nodeinfo.SetConsensusState(isaacstates.StateBooting)
-	_ = nodeinfo.SetConnInfo(network.ConnInfoToString(
+	nodeInfo := isaacnetwork.NewNodeInfoUpdater(design.NetworkID, local, version)
+	_ = nodeInfo.SetConsensusState(isaacstates.StateBooting)
+	_ = nodeInfo.SetConnInfo(nutil.ConnInfoToString(
 		design.Network.PublishString,
 		design.Network.TLSInsecure,
 	))
-	_ = nodeinfo.SetLocalParams(isaacparams)
 
-	nctx := context.WithValue(pctx, NodeInfoContextKey, nodeinfo)
+	_ = nodeInfo.SetIsaacParams(design.LocalParams.ISAAC)
+	_ = nodeInfo.SetMemberlistParams(design.LocalParams.Memberlist)
+	_ = nodeInfo.SetMISCParams(design.LocalParams.MISC)
 
-	switch err := UpdateNodeInfoWithNewBlock(db, nodeinfo); {
+	nctx := context.WithValue(pctx, NodeInfoContextKey, nodeInfo)
+
+	switch err := UpdateNodeInfoWithNewBlock(db, nodeInfo); {
 	case err == nil:
 	case errors.Is(err, util.ErrNotFound):
-		log.Log().Debug().Err(err).Msg("nodeinfo not updated")
+		log.Log().Debug().Err(err).Msg("nodeInfo not updated")
 	default:
-		log.Log().Error().Err(err).Msg("failed to update nodeinfo")
+		log.Log().Error().Err(err).Msg("failed to update nodeInfo")
 	}
 
 	return nctx, nil

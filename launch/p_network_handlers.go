@@ -51,7 +51,6 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 	var encs *encoder.Encoders
 	var design NodeDesign
 	var local base.LocalNode
-	var params *LocalParams
 	var db isaac.Database
 	var pool *isaacdatabase.TempPool
 	var proposalMaker *isaac.ProposalMaker
@@ -68,7 +67,6 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 		EncodersContextKey, &encs,
 		DesignContextKey, &design,
 		LocalContextKey, &local,
-		LocalParamsContextKey, &params,
 		CenterDatabaseContextKey, &db,
 		PoolDatabaseContextKey, &pool,
 		ProposalMakerContextKey, &proposalMaker,
@@ -83,7 +81,7 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 		return pctx, e.Wrap(err)
 	}
 
-	isaacparams := params.ISAAC
+	isaacparams := design.LocalParams.ISAAC
 
 	lastBlockMapf := QuicstreamHandlerLastBlockMapFunc(db)
 	suffrageNodeConnInfof := QuicstreamHandlerSuffrageNodeConnInfoFunc(db, m)
@@ -194,7 +192,7 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 
 				return err
 			},
-			params.MISC.MaxMessageSize,
+			design.LocalParams.MISC.MaxMessageSize,
 		), nil)
 
 	if gerror != nil {
@@ -543,7 +541,7 @@ func AttachBlockItemsNetworkHandlers(pctx context.Context) error {
 
 	var aclallow ACLAllowFunc
 
-	switch i, err := pACLAllowFunc(pctx); {
+	switch i, err := PACLAllowFunc(pctx); {
 	case err != nil:
 		return err
 	default:

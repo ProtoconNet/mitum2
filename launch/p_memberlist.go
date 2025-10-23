@@ -43,7 +43,7 @@ func PMemberlist(pctx context.Context) (context.Context, error) {
 	var log *logging.Logging
 	var encs *encoder.Encoders
 	var local base.LocalNode
-	var params *LocalParams
+	var design NodeDesign
 	var client *isaacnetwork.BaseClient
 	var connectionPool *quicstream.ConnectionPool
 
@@ -51,7 +51,7 @@ func PMemberlist(pctx context.Context) (context.Context, error) {
 		LoggingContextKey, &log,
 		EncodersContextKey, &encs,
 		LocalContextKey, &local,
-		LocalParamsContextKey, &params,
+		DesignContextKey, &design,
 		QuicstreamClientContextKey, &client,
 		ConnectionPoolContextKey, &connectionPool,
 	); err != nil {
@@ -64,18 +64,18 @@ func PMemberlist(pctx context.Context) (context.Context, error) {
 		encs.Default(),
 	)
 
-	localnode, err := memberlistLocalNode(pctx)
+	localNode, err := memberlistLocalNode(pctx)
 	if err != nil {
 		return pctx, e.Wrap(err)
 	}
 
-	config, err := memberlistConfig(pctx, localnode, connectionPool)
+	config, err := memberlistConfig(pctx, localNode, connectionPool)
 	if err != nil {
 		return pctx, e.Wrap(err)
 	}
 
 	args := quicmemberlist.NewMemberlistArgs(encs.JSON(), config)
-	args.ExtraSameMemberLimit = params.Memberlist.ExtraSameMemberLimit
+	args.ExtraSameMemberLimit = design.LocalParams.Memberlist.ExtraSameMemberLimit
 	args.FetchCallbackBroadcastMessageFunc = quicmemberlist.FetchCallbackBroadcastMessageFunc(
 		HandlerPrefixMemberlistCallbackBroadcastMessage,
 		headerdial,
@@ -85,13 +85,13 @@ func PMemberlist(pctx context.Context) (context.Context, error) {
 		HandlerPrefixMemberlistEnsureBroadcastMessage,
 		local.Address(),
 		local.Privatekey(),
-		params.ISAAC.NetworkID(),
+		design.LocalParams.ISAAC.NetworkID(),
 		headerdial,
 	)
-	args.BroadcastTimerMult = params.Memberlist.broadcastTimerMult
-	args.UserMsgLoopInterval = params.Memberlist.userMsgLoopInterval
+	args.BroadcastTimerMult = design.LocalParams.Memberlist.BroadcastTimerMult
+	args.UserMsgLoopInterval = design.LocalParams.Memberlist.UserMsgLoopInterval
 
-	m, err := quicmemberlist.NewMemberlist(localnode, args)
+	m, err := quicmemberlist.NewMemberlist(localNode, args)
 	if err != nil {
 		return pctx, e.Wrap(err)
 	}
@@ -174,7 +174,7 @@ func PPatchMemberlist(pctx context.Context) (ctx context.Context, err error) {
 
 func patchMemberlistNotifyMsg(pctx context.Context) (context.Context, error) {
 	var log *logging.Logging
-	var isaacparams *isaac.Params
+	var design NodeDesign
 	var ballotbox *isaacstates.Ballotbox
 	var m *quicmemberlist.Memberlist
 	var client *isaacnetwork.BaseClient
@@ -184,7 +184,7 @@ func patchMemberlistNotifyMsg(pctx context.Context) (context.Context, error) {
 
 	if err := util.LoadFromContextOK(pctx,
 		LoggingContextKey, &log,
-		ISAACParamsContextKey, &isaacparams,
+		DesignContextKey, &design,
 		BallotboxContextKey, &ballotbox,
 		QuicstreamClientContextKey, &client,
 		MemberlistContextKey, &m,
@@ -223,7 +223,7 @@ func patchMemberlistNotifyMsg(pctx context.Context) (context.Context, error) {
 				Stringer("node", t.SignFact().Node()).
 				Msg("ballot notified")
 
-			if err := t.IsValid(isaacparams.NetworkID()); err != nil {
+			if err := t.IsValid(design.LocalParams.ISAAC.NetworkID()); err != nil {
 				l.Trace().Err(err).Interface("ballot", t).Msg("new ballot; failed to vote")
 
 				return
@@ -388,7 +388,7 @@ func memberlistConfig(
 
 	delegate := quicmemberlist.NewDelegate(localnode, nil, func([]byte) {
 		panic("set notifyMsgFunc")
-	}, params.RetransmitMult())
+	}, params.RetransmitMult)
 
 	alive, err := memberlistAlive(pctx)
 	if err != nil {

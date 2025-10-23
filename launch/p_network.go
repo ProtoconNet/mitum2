@@ -64,12 +64,10 @@ func PNetwork(pctx context.Context) (context.Context, error) {
 
 	var log *logging.Logging
 	var design NodeDesign
-	var params *LocalParams
 
 	if err := util.LoadFromContextOK(pctx,
 		LoggingContextKey, &log,
 		DesignContextKey, &design,
-		LocalParamsContextKey, &params,
 	); err != nil {
 		return pctx, e.Wrap(err)
 	}
@@ -77,15 +75,15 @@ func PNetwork(pctx context.Context) (context.Context, error) {
 	handlers := quicstream.NewPrefixHandler(nil)
 	_ = handlers.SetLogging(log)
 
-	quicconfig := ServerQuicConfig(params.Network)
+	quicConfig := ServerQuicConfig(design.LocalParams.Network)
 
 	server, err := quicstream.NewServer(
 		design.Network.Bind,
-		GenerateNewTLSConfig(params.ISAAC.NetworkID()),
-		quicconfig,
+		GenerateNewTLSConfig(design.LocalParams.ISAAC.NetworkID()),
+		quicConfig,
 		handlers.Handler,
 		func() time.Duration {
-			return params.Network.MaxStreamTimeout()
+			return design.LocalParams.Network.MaxStreamTimeout()
 		},
 	)
 	if err != nil {

@@ -54,8 +54,8 @@ type MemberlistArgs struct {
 	FetchCallbackBroadcastMessageTimeout time.Duration
 	PongEnsureBroadcastMessageTimeout    time.Duration
 	PongEnsureBroadcastMessageExpire     time.Duration
-	UserMsgLoopInterval                  time.Duration
-	BroadcastTimerMult                   int
+	UserMsgLoopInterval                  func() time.Duration
+	BroadcastTimerMult                   func() int
 }
 
 func NewMemberlistArgs(jsonencoder encoder.Encoder, config *memberlist.Config) *MemberlistArgs {
@@ -939,7 +939,7 @@ func (srv *Memberlist) broadcastEnsured(id string, threshold base.Threshold, exc
 
 func (srv *Memberlist) loopUserMsgs(ctx context.Context) {
 	sem := semaphore.NewWeighted(maxHandleUserMsg)
-	ticker := time.NewTicker(srv.args.UserMsgLoopInterval)
+	ticker := time.NewTicker(srv.args.UserMsgLoopInterval())
 	defer ticker.Stop()
 
 	for {

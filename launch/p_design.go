@@ -2,6 +2,7 @@ package launch
 
 import (
 	"context"
+
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
@@ -41,7 +42,7 @@ func PLoadDesign(pctx context.Context) (context.Context, error) {
 		return pctx, e.Wrap(err)
 	}
 
-	jsonencoder := encs.JSON()
+	jsonEncoder := encs.JSON()
 
 	var design NodeDesign
 	var designString string
@@ -50,7 +51,7 @@ func PLoadDesign(pctx context.Context) (context.Context, error) {
 	case "file":
 		f := flag.URL().Path
 
-		switch d, b, err := NodeDesignFromFile(f, jsonencoder); {
+		switch d, b, err := NodeDesignFromFile(f, jsonEncoder); {
 		case err != nil:
 			return pctx, e.Wrap(err)
 		default:
@@ -58,7 +59,7 @@ func PLoadDesign(pctx context.Context) (context.Context, error) {
 			designString = string(b)
 		}
 	case "http", "https":
-		switch d, b, err := NodeDesignFromHTTP(flag.URL().String(), flag.Properties().HTTPSTLSInsecure, jsonencoder); {
+		switch d, b, err := NodeDesignFromHTTP(flag.URL().String(), flag.Properties().HTTPSTLSInsecure, jsonEncoder); {
 		case err != nil:
 			return pctx, e.Wrap(err)
 		default:
@@ -66,7 +67,7 @@ func PLoadDesign(pctx context.Context) (context.Context, error) {
 			designString = string(b)
 		}
 	case "consul":
-		switch d, b, err := NodeDesignFromConsul(flag.URL().Host, flag.URL().Path, jsonencoder); {
+		switch d, b, err := NodeDesignFromConsul(flag.URL().Host, flag.URL().Path, jsonEncoder); {
 		case err != nil:
 			return pctx, e.Wrap(err)
 		default:
@@ -80,7 +81,7 @@ func PLoadDesign(pctx context.Context) (context.Context, error) {
 	log.Log().Debug().Interface("design", design).Msg("design loaded")
 
 	if len(privstring) > 0 {
-		priv, err := base.DecodePrivatekeyFromString(privstring, jsonencoder)
+		priv, err := base.DecodePrivatekeyFromString(privstring, jsonEncoder)
 		if err != nil {
 			return pctx, e.Wrap(err)
 		}
@@ -152,9 +153,10 @@ func PCheckDesign(pctx context.Context) (context.Context, error) {
 	log.Log().Debug().Interface("design", design).Msg("design checked")
 
 	return util.ContextWithValues(pctx, map[util.ContextKey]interface{}{
-		DesignContextKey:      design,
-		LocalParamsContextKey: design.LocalParams,
-		ISAACParamsContextKey: design.LocalParams.ISAAC,
+		DesignContextKey:           design,
+		LocalParamsContextKey:      design.LocalParams,
+		ISAACParamsContextKey:      design.LocalParams.ISAAC,
+		MemberlistParamsContextKey: design.LocalParams.Memberlist,
 	}), nil
 }
 

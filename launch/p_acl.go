@@ -53,7 +53,7 @@ func PLoadACL(pctx context.Context) (context.Context, error) {
 	return context.WithValue(pctx, ACLContextKey, acl), nil
 }
 
-func pACLAllowFunc(pctx context.Context) (ACLAllowFunc, error) {
+func PACLAllowFunc(pctx context.Context) (ACLAllowFunc, error) {
 	var acl *YAMLACL
 	var eventLogging *EventLogging
 

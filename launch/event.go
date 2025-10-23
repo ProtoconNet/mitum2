@@ -572,7 +572,7 @@ func PEventLoggingNetworkHandlers(pctx context.Context) (context.Context, error)
 
 	var aclallow ACLAllowFunc
 
-	switch i, err := pACLAllowFunc(pctx); {
+	switch i, err := PACLAllowFunc(pctx); {
 	case err != nil:
 		return pctx, err
 	default:

@@ -229,11 +229,11 @@ func (d NodeDesign) MarshalJSON() ([]byte, error) {
 	return util.MarshalJSON(d.marshaler())
 }
 
-func (d NodeDesign) MarshalYAML() (interface{}, error) {
-	return d.marshaler(), nil
+func (d NodeDesign) MarshalYAML() interface{} {
+	return d.marshaler()
 }
 
-func (d *NodeDesign) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
+func (d *NodeDesign) DecodeYAML(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode NodeDesign")
 
 	nb, err := util.ReplaceEnvVariables(b)
@@ -246,14 +246,14 @@ func (d *NodeDesign) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
 		return e.Wrap(err)
 	}
 
-	switch address, err := base.DecodeAddress(u.Address, jsonencoder); {
+	switch address, err := base.DecodeAddress(u.Address, enc); {
 	case err != nil:
 		return e.WithMessage(err, "invalid address")
 	default:
 		d.Address = address
 	}
 
-	switch priv, err := base.DecodePrivatekeyFromString(u.Privatekey, jsonencoder); {
+	switch priv, err := base.DecodePrivatekeyFromString(u.Privatekey, enc); {
 	case err != nil:
 		return e.WithMessage(err, "invalid privatekey")
 	default:
@@ -262,14 +262,14 @@ func (d *NodeDesign) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
 
 	d.NetworkID = base.NetworkID([]byte(u.NetworkID))
 
-	switch i, err := u.Network.Decode(jsonencoder); {
+	switch i, err := u.Network.Decode(enc); {
 	case err != nil:
 		return e.Wrap(err)
 	default:
 		d.Network = i
 	}
 
-	switch i, err := u.Storage.Decode(jsonencoder); {
+	switch i, err := u.Storage.Decode(enc); {
 	case err != nil:
 		return e.Wrap(err)
 	default:
@@ -281,7 +281,7 @@ func (d *NodeDesign) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
 		return e.Wrap(err)
 	default:
 		d.SyncSources = NewSyncSourcesDesign(nil)
-		if err := d.SyncSources.DecodeYAML(sb, jsonencoder); err != nil {
+		if err := d.SyncSources.DecodeYAML(sb, enc); err != nil {
 			return e.Wrap(err)
 		}
 	}
@@ -292,7 +292,7 @@ func (d *NodeDesign) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
 	case err != nil:
 		return e.Wrap(err)
 	default:
-		if err := d.LocalParams.DecodeYAML(lb, jsonencoder); err != nil {
+		if err := d.LocalParams.DecodeYAML(lb, enc); err != nil {
 			return e.Wrap(err)
 		}
 	}
@@ -504,7 +504,7 @@ func (d NodeStorageDesign) MarshalYAML() (interface{}, error) {
 	return d.marshaler(), nil
 }
 
-func (d *NodeStorageDesign) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
+func (d *NodeStorageDesign) DecodeYAML(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode NodeStorageDesign")
 
 	nb, err := util.ReplaceEnvVariables(b)
@@ -518,7 +518,7 @@ func (d *NodeStorageDesign) DecodeYAML(b []byte, jsonencoder encoder.Encoder) er
 		return e.Wrap(err)
 	}
 
-	switch i, err := u.Decode(jsonencoder); {
+	switch i, err := u.Decode(enc); {
 	case err != nil:
 		return err
 	default:
@@ -560,7 +560,7 @@ func (*GenesisDesign) IsValid([]byte) error {
 }
 
 func (d *GenesisDesign) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
-	e := util.StringError("decode GenesisOpertionsDesign")
+	e := util.StringError("decode GenesisDesign")
 
 	nb, err := util.ReplaceEnvVariables(b)
 	if err != nil {
@@ -666,10 +666,19 @@ func (d *SyncSourcesDesign) MarshalJSON() ([]byte, error) {
 }
 
 func (d *SyncSourcesDesign) MarshalYAML() (interface{}, error) {
-	return d.l, nil
+	var syncSources []interface{}
+	for i := range d.l {
+		y, err := d.l[i].MarshalYAML()
+		if err != nil {
+			return nil, err
+		}
+		syncSources = append(syncSources, y)
+	}
+
+	return syncSources, nil
 }
 
-func (d *SyncSourcesDesign) DecodeYAML(b []byte, jsonencoder encoder.Encoder) error {
+func (d *SyncSourcesDesign) DecodeYAML(b []byte, enc encoder.Encoder) error {
 	e := util.StringError("decode SyncSourcesDesign")
 
 	nb, err := util.ReplaceEnvVariables(b)
@@ -692,7 +701,7 @@ func (d *SyncSourcesDesign) DecodeYAML(b []byte, jsonencoder encoder.Encoder) er
 
 		var s isaacnetwork.SyncSource
 
-		switch err := s.DecodeYAML(vb, jsonencoder); {
+		switch err := s.DecodeYAML(vb, enc); {
 		case err != nil:
 			return e.Wrap(err)
 		default:
@@ -740,11 +749,24 @@ func getFromConsul(addr, key string) ([]byte, error) {
 	}
 }
 
-func getFromHTTP(u string, tlsinsecure bool) ([]byte, error) {
+func WriteConsul(b []byte, flag DesignFlag) error {
+	switch client, err := consulClient(flag.URL().Host); {
+	case err != nil:
+		return err
+	default:
+		kv := &consulapi.KVPair{Key: flag.URL().Path, Value: b}
+
+		_, err = client.KV().Put(kv, nil)
+
+		return errors.WithStack(err)
+	}
+}
+
+func getFromHTTP(u string, tlsInsecure bool) ([]byte, error) {
 	httpclient := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: tlsinsecure,
+				InsecureSkipVerify: tlsInsecure,
 			},
 		},
 	}

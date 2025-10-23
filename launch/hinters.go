@@ -43,6 +43,7 @@ var Hinters = []encoder.DecodeDetail{
 	{Hint: isaac.INITExpelVoteproofHint, Instance: isaac.INITExpelVoteproof{}},
 	{Hint: isaac.INITStuckVoteproofHint, Instance: isaac.INITStuckVoteproof{}},
 	{Hint: isaac.ParamsHint, Instance: &isaac.Params{}},
+	{Hint: isaac.MiscParamsHint, Instance: &isaac.MISCParams{}},
 	{Hint: isaac.ManifestHint, Instance: isaac.Manifest{}},
 	{Hint: isaac.NetworkPolicyHint, Instance: isaac.NetworkPolicy{}},
 	{Hint: isaac.NetworkPolicyStateValueHint, Instance: isaac.NetworkPolicyStateValue{}},
@@ -128,6 +129,7 @@ var Hinters = []encoder.DecodeDetail{
 		Instance: quicmemberlist.EnsureBroadcastMessageHeader{},
 	},
 	{Hint: quicmemberlist.MemberHint, Instance: quicmemberlist.BaseMember{}},
+	{Hint: quicmemberlist.ParamsHint, Instance: &quicmemberlist.MemberlistParams{}},
 	{Hint: quicstreamheader.DefaultResponseHeaderHint, Instance: quicstreamheader.DefaultResponseHeader{}},
 
 	{Hint: ReadNodeHeaderHint, Instance: ReadNodeHeader{}},

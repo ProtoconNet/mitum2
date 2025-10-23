@@ -24,15 +24,15 @@ type ballotBroadcastTimers struct {
 	timers             *util.SimpleTimers
 	broadcast          func(context.Context, base.Ballot) error
 	points             map[util.TimerID]base.StagePoint
-	interval           time.Duration
-	broadcastTimerMult int
+	interval           func() time.Duration
+	broadcastTimerMult func() int
 }
 
 func newBallotBroadcastTimers(
 	timers *util.SimpleTimers,
 	broadcast func(context.Context, base.Ballot) error,
-	interval time.Duration,
-	broadcastTimerMult int,
+	interval func() time.Duration,
+	broadcastTimerMult func() int,
 ) *ballotBroadcastTimers {
 	return &ballotBroadcastTimers{
 		RWMutex:            &sync.RWMutex{},
@@ -94,7 +94,7 @@ func (bbt *ballotBroadcastTimers) SetBroadcasterFunc(
 	return bbt
 }
 
-func (bbt *ballotBroadcastTimers) SetInterval(i time.Duration) *ballotBroadcastTimers {
+func (bbt *ballotBroadcastTimers) SetInterval(i func() time.Duration) *ballotBroadcastTimers {
 	bbt.Lock()
 	defer bbt.Unlock()
 
@@ -171,7 +171,7 @@ func (bbt *ballotBroadcastTimers) addTimer(
 		ti,
 		func(t uint64) time.Duration {
 			if strings.HasPrefix(ti.String(), "broadcast-init-ballot/") && !strings.Contains(ti.String(), "round=0") {
-				return time.Duration(bbt.broadcastTimerMult) * intervalf(t)
+				return time.Duration(bbt.broadcastTimerMult()) * intervalf(t)
 			}
 			return intervalf(t)
 		},
@@ -260,17 +260,17 @@ func (*ballotBroadcastTimers) timerID(bl base.Ballot) util.TimerID {
 }
 
 func (bbt *ballotBroadcastTimers) defaultInterval(initial time.Duration) func(uint64) time.Duration {
-	ninitial := initial
-	if ninitial < 1 {
-		ninitial = time.Nanosecond
+	nInitial := initial
+	if nInitial < 1 {
+		nInitial = time.Nanosecond
 	}
 
 	return func(i uint64) time.Duration {
 		if i < 1 {
-			return ninitial
+			return nInitial
 		}
 
-		return bbt.interval
+		return bbt.interval()
 	}
 }
 

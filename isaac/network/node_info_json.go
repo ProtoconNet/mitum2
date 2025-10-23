@@ -2,24 +2,28 @@ package isaacnetwork
 
 import (
 	"encoding/json"
+	"reflect"
+
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/isaac"
 	isaacstates "github.com/ProtoconNet/mitum2/isaac/states"
+	"github.com/ProtoconNet/mitum2/network/quicmemberlist"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/encoder"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/localtime"
 	"github.com/pkg/errors"
-	"reflect"
 )
 
 type NodeInfoLocalJSONMarshaler struct {
-	Address     base.Address   `json:"address"`
-	Publickey   base.Publickey `json:"publickey"`
-	LocalParams *isaac.Params  `json:"parameters"` //nolint:tagliatelle //...
-	ConnInfo    string         `json:"conn_info"`
-	StartedAt   localtime.Time `json:"started_at"`
-	Version     util.Version   `json:"version"`
+	Address          base.Address                     `json:"address"`
+	Publickey        base.Publickey                   `json:"publickey"`
+	IsaacParams      *isaac.Params                    `json:"isaac_parameters"` //nolint:tagliatelle //...
+	MemberlistParams *quicmemberlist.MemberlistParams `json:"memberlist_parameters"`
+	MISCParams       *isaac.MISCParams                `json:"misc_parameters"`
+	ConnInfo         string                           `json:"conn_info"`
+	StartedAt        localtime.Time                   `json:"started_at"`
+	Version          util.Version                     `json:"version"`
 }
 
 type NodeInfoSuffrageJSONMarshaler struct {
@@ -47,12 +51,14 @@ func (info NodeInfo) JSONMarshaler() NodeInfoJSONMarshaler {
 		BaseHinter: info.BaseHinter,
 		NetworkID:  info.networkID,
 		Local: NodeInfoLocalJSONMarshaler{
-			Address:     info.address,
-			Publickey:   info.publickey,
-			LocalParams: info.localParams,
-			ConnInfo:    info.connInfo,
-			Version:     info.version,
-			StartedAt:   localtime.New(info.startedAt),
+			Address:          info.address,
+			Publickey:        info.publickey,
+			IsaacParams:      info.isaacParams,
+			MemberlistParams: info.memberlistParams,
+			MISCParams:       info.miscParams,
+			ConnInfo:         info.connInfo,
+			Version:          info.version,
+			StartedAt:        localtime.New(info.startedAt),
 		},
 		Consensus: NodeInfoConsensusJSONMarshaler{
 			State: info.consensusState,
@@ -80,12 +86,14 @@ type nodeInfoJSONUnmarshaler struct {
 }
 
 type nodeInfoLocalJSONUnmarshaler struct {
-	Address     string          `json:"address"`
-	Publickey   string          `json:"publickey"`
-	ConnInfo    string          `json:"conn_info"`
-	StartedAt   localtime.Time  `json:"started_at"`
-	LocalParams json.RawMessage `json:"parameters"` //nolint:tagliatelle //...
-	Version     util.Version    `json:"version"`
+	Address          string          `json:"address"`
+	Publickey        string          `json:"publickey"`
+	ConnInfo         string          `json:"conn_info"`
+	StartedAt        localtime.Time  `json:"started_at"`
+	IsaacParams      json.RawMessage `json:"isaac_parameters"` //nolint:tagliatelle //...
+	MemberlistParams json.RawMessage `json:"memberlist_parameters"`
+	MISCParams       json.RawMessage `json:"misc_parameters"`
+	Version          util.Version    `json:"version"`
 }
 
 type nodeInfoConsensusJSONUnmarshaler struct {
@@ -126,30 +134,70 @@ func (info *NodeInfo) DecodeJSON(b []byte, enc encoder.Encoder) error {
 		info.publickey = i
 	}
 
-	//params := isaac.NewParams(info.networkID)
-	var params *isaac.Params
+	//isaacParams := isaac.NewParams(info.networkID)
+	var isaacParams *isaac.Params
 
-	hinter, err := enc.Decode(u.Local.LocalParams)
+	ipHinter, err := enc.Decode(u.Local.IsaacParams)
 	if err != nil {
 		return e.Wrap(err)
 	}
 
-	if hinter == nil {
+	if ipHinter == nil {
 		return nil
 	}
 
-	i, ok := hinter.(*isaac.Params)
+	i, ok := ipHinter.(*isaac.Params)
 	if !ok {
-		return errors.Errorf("expected %v, but %T", reflect.TypeOf(params).Elem(), hinter)
+		return errors.Errorf("expected %v, but %T", reflect.TypeOf(isaacParams).Elem(), ipHinter)
 	}
 
-	params = i
+	isaacParams = i
 
-	if err := params.SetNetworkID(info.networkID); err != nil {
+	if err := isaacParams.SetNetworkID(info.networkID); err != nil {
 		return e.Wrap(err)
 	}
 
-	info.localParams = params
+	info.isaacParams = isaacParams
+
+	var memberlistParams *quicmemberlist.MemberlistParams
+
+	mpHinter, err := enc.Decode(u.Local.MemberlistParams)
+	if err != nil {
+		return e.Wrap(err)
+	}
+
+	if mpHinter == nil {
+		return nil
+	}
+
+	j, ok := mpHinter.(*quicmemberlist.MemberlistParams)
+	if !ok {
+		return errors.Errorf("expected %v, but %T", reflect.TypeOf(memberlistParams).Elem(), mpHinter)
+	}
+
+	memberlistParams = j
+
+	info.memberlistParams = memberlistParams
+
+	var miscParams *isaac.MISCParams
+
+	mscHinter, err := enc.Decode(u.Local.MISCParams)
+	if err != nil {
+		return e.Wrap(err)
+	}
+
+	if mscHinter == nil {
+		return nil
+	}
+
+	k, ok := mscHinter.(*isaac.MISCParams)
+	if !ok {
+		return errors.Errorf("expected %v, but %T", reflect.TypeOf(miscParams).Elem(), mscHinter)
+	}
+
+	miscParams = k
+
+	info.miscParams = miscParams
 
 	info.connInfo = u.Local.ConnInfo
 	info.version = u.Local.Version
