@@ -101,7 +101,7 @@ func (srv *Server) accept(ctx context.Context, listener *quic.EarlyListener) {
 	}
 }
 
-func (srv *Server) handleConnection(ctx context.Context, conn quic.EarlyConnection) {
+func (srv *Server) handleConnection(ctx context.Context, conn *quic.Conn) {
 	for {
 		stream, err := conn.AcceptStream(ctx)
 		if err != nil {
@@ -155,7 +155,7 @@ func (srv *Server) handleConnection(ctx context.Context, conn quic.EarlyConnecti
 	}
 }
 
-func (srv *Server) handleStream(ctx context.Context, remoteAddr net.Addr, stream quic.Stream) {
+func (srv *Server) handleStream(ctx context.Context, remoteAddr net.Addr, stream *quic.Stream) {
 	sctx, cancel := srv.streamTimeoutContext(ctx)
 	defer cancel()
 

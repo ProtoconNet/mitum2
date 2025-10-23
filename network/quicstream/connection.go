@@ -16,17 +16,17 @@ import (
 var ErrOpenStream = util.NewIDError("open stream")
 
 type Connection struct {
-	conn quic.EarlyConnection
+	conn *quic.Conn
 	id   string
 }
 
 func Dial(
 	ctx context.Context,
 	addr *net.UDPAddr,
-	tlsconfig *tls.Config,
-	quicconfig *quic.Config,
+	tlsConfig *tls.Config,
+	quicConfig *quic.Config,
 ) (*Connection, error) {
-	conn, err := quic.DialAddrEarly(ctx, addr.String(), tlsconfig, quicconfig)
+	conn, err := quic.DialAddrEarly(ctx, addr.String(), tlsConfig, quicConfig)
 	if err != nil {
 		return nil, &net.OpError{Net: "udp", Op: "dial", Err: err}
 	}
@@ -95,7 +95,7 @@ func (c *Connection) ID() string {
 	return c.id
 }
 
-func (c *Connection) openStream(ctx context.Context) (stream quic.Stream, _ error) {
+func (c *Connection) openStream(ctx context.Context) (stream *quic.Stream, _ error) {
 	if c.conn.Context().Err() != nil {
 		return nil, errors.Wrap(c.conn.Context().Err(), "closed")
 	}
