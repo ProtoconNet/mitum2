@@ -23,6 +23,7 @@ type NetworkClientCommand struct { //nolint:govet //...
 	//revive:disable:line-length-limit
 	//revive:disable:nested-structs
 	NodeInfo       NetworkClientNodeInfoCommand       `cmd:"" name:"node-info" help:"remote node info"`
+	NodeMetrics    NetworkClientNodeMetricsCommand    `cmd:"" name:"node-metrics" help:"remote node metrics"`
 	SendOperation  NetworkClientSendOperationCommand  `cmd:"" name:"send-operation" help:"send operation"`
 	State          NetworkClientStateCommand          `cmd:"" name:"state" help:"get state"`
 	LastBlockMap   NetworkClientLastBlockMapCommand   `cmd:"" name:"last-blockmap" help:"get last blockmap"`

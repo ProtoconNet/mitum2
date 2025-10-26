@@ -61,6 +61,7 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 	var ballotbox *isaacstates.Ballotbox
 	var filternotifymsg quicmemberlist.FilterNotifyMsgFunc
 	var lvps *isaac.LastVoteproofsHandler
+	var metricsCollector *isaacnetwork.NetworkMetricsCollector
 
 	if err := util.LoadFromContextOK(pctx,
 		LoggingContextKey, &log,
@@ -77,6 +78,7 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 		BallotboxContextKey, &ballotbox,
 		FilterMemberlistNotifyMsgFuncContextKey, &filternotifymsg,
 		LastVoteproofsHandlerContextKey, &lvps,
+		MetricsCollectorContextKey, &metricsCollector,
 	); err != nil {
 		return pctx, e.Wrap(err)
 	}
@@ -165,6 +167,13 @@ func PNetworkHandlers(pctx context.Context) (context.Context, error) {
 	EnsureHandlerAdd(pctx, &gerror,
 		isaacnetwork.HandlerNameNodeInfo,
 		isaacnetwork.QuicstreamHandlerNodeInfo(QuicstreamHandlerGetNodeInfoFunc(encs.Default(), nodeinfo)), nil)
+
+	EnsureHandlerAdd(pctx, &gerror,
+		isaacnetwork.HandlerNameNodeMetrics,
+		isaacnetwork.QuicstreamHandlerNodeMetrics(
+			QuicstreamHandlerGetNodeMetricsFunc(encs.Default(), metricsCollector),
+		),
+		nil)
 
 	EnsureHandlerAdd(pctx, &gerror,
 		isaacnetwork.HandlerNameSendBallots,
@@ -444,6 +453,20 @@ func QuicstreamHandlerGetNodeInfoFunc(
 		}
 
 		return b, nil
+	}
+}
+
+func QuicstreamHandlerGetNodeMetricsFunc(
+	enc encoder.Encoder,
+	collector *isaacnetwork.NetworkMetricsCollector,
+) func(string) ([]byte, error) {
+	return func(interval string) ([]byte, error) {
+		if collector == nil {
+			return nil, errors.Errorf("metrics collector not initialized")
+		}
+
+		metrics := collector.GetSnapshot(interval)
+		return enc.Marshal(metrics)
 	}
 }
 

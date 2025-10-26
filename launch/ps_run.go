@@ -53,7 +53,8 @@ func DefaultRunPS() *ps.PS {
 		PostAddOK(PNameLoadFromDatabase, PLoadFromDatabase).
 		PostAddOK(PNameCheckBlocksOfStorage, PCheckBlocksOfStorage).
 		PostAddOK(PNamePatchBlockItemReaders, PPatchBlockItemReaders).
-		PostAddOK(PNameNodeInfo, PNodeInfo)
+		PostAddOK(PNameNodeInfo, PNodeInfo).
+		PostAddOK(PNameNodeMetric, PNodeMetric)
 
 	_ = pps.POK(PNameNetwork).
 		PreAddOK(PNameQuicstreamClient, PQuicstreamClient).

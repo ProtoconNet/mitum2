@@ -28,6 +28,7 @@ var (
 	StateRequestHeaderHint                  = hint.MustNewHint("state-header-v0.0.1")
 	ExistsInStateOperationRequestHeaderHint = hint.MustNewHint("exists-instate-operation-header-v0.0.1")
 	NodeInfoRequestHeaderHint               = hint.MustNewHint("node-info-header-v0.0.1")
+	NodeMetricsRequestHeaderHint            = hint.MustNewHint("node-metrics-header-v0.0.1")
 	SendBallotsHeaderHint                   = hint.MustNewHint("send-ballots-header-v0.0.1")
 	SetAllowConsensusHeaderHint             = hint.MustNewHint("set-allow-consensus-header-v0.0.1")
 	StreamOperationsHeaderHint              = hint.MustNewHint("stream-operations-header-v0.0.1")
@@ -57,6 +58,7 @@ var (
 	HandlerNameSendOperation          quicstream.HandlerName = "send_operation"
 	HandlerNameState                  quicstream.HandlerName = "state"
 	HandlerNameExistsInStateOperation quicstream.HandlerName = "exists_instate_operation"
+	HandlerNameNodeMetrics            quicstream.HandlerName = "node_metrics"
 	HandlerNameNodeInfo               quicstream.HandlerName = "node_info"
 	HandlerNameSendBallots            quicstream.HandlerName = "send_ballots"
 	HandlerNameSetAllowConsensus      quicstream.HandlerName = "set_allow_consensus"
@@ -82,6 +84,7 @@ var (
 	handlerPrefixOperation              = quicstream.HashPrefix(HandlerNameOperation)
 	handlerPrefixSendOperation          = quicstream.HashPrefix(HandlerNameSendOperation)
 	handlerPrefixState                  = quicstream.HashPrefix(HandlerNameState)
+	handlerPrefixNodeMetrics            = quicstream.HashPrefix(HandlerNameNodeMetrics)
 	handlerPrefixExistsInStateOperation = quicstream.HashPrefix(HandlerNameExistsInStateOperation)
 	handlerPrefixNodeInfo               = quicstream.HashPrefix(HandlerNameNodeInfo)
 	handlerPrefixSendBallots            = quicstream.HashPrefix(HandlerNameSendBallots)
@@ -594,6 +597,29 @@ func (h ExistsInStateOperationRequestHeader) FactHash() util.Hash {
 	return h.facthash
 }
 
+type NodeMetricsRequestHeader struct {
+	interval string // "1s", "1m", "5m" 등
+	BaseHeader
+}
+
+func NewNodeMetricsRequestHeader(interval string) NodeMetricsRequestHeader {
+	return NodeMetricsRequestHeader{
+		BaseHeader: NewBaseHeader(NodeMetricsRequestHeaderHint),
+		interval:   interval,
+	}
+}
+
+func (h NodeMetricsRequestHeader) IsValid([]byte) error {
+	if err := h.BaseHinter.IsValid(NodeMetricsRequestHeaderHint.Type().Bytes()); err != nil {
+		return errors.WithMessage(err, "invalid NodeMetricsHeader")
+	}
+	return nil
+}
+
+func (h NodeMetricsRequestHeader) Interval() string {
+	return h.interval
+}
+
 type NodeInfoRequestHeader struct {
 	BaseHeader
 }
@@ -968,6 +994,8 @@ func headerPrefixByHint(ht hint.Hint) quicstream.HandlerPrefix {
 		return handlerPrefixExistsInStateOperation
 	case NodeInfoRequestHeaderHint.Type():
 		return handlerPrefixNodeInfo
+	case NodeMetricsRequestHeaderHint.Type():
+		return handlerPrefixNodeMetrics
 	case SendBallotsHeaderHint.Type():
 		return handlerPrefixSendBallots
 	case SetAllowConsensusHeaderHint.Type():

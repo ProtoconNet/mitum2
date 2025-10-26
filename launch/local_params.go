@@ -473,6 +473,7 @@ var networkHandlerNames = []quicstream.HandlerName{
 	isaacnetwork.HandlerNameLastSuffrageProof,
 	isaacnetwork.HandlerNameNodeChallenge,
 	isaacnetwork.HandlerNameNodeInfo,
+	isaacnetwork.HandlerNameNodeMetrics,
 	isaacnetwork.HandlerNameOperation,
 	isaacnetwork.HandlerNameProposal,
 	isaacnetwork.HandlerNameRequestProposal,

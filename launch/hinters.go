@@ -73,6 +73,7 @@ var Hinters = []encoder.DecodeDetail{
 	{Hint: isaacnetwork.NodeChallengeRequestHeaderHint, Instance: isaacnetwork.NodeChallengeRequestHeader{}},
 	{Hint: isaacnetwork.NodeInfoHint, Instance: isaacnetwork.NodeInfo{}},
 	{Hint: isaacnetwork.NodeInfoRequestHeaderHint, Instance: isaacnetwork.NodeInfoRequestHeader{}},
+	{Hint: isaacnetwork.NodeMetricsRequestHeaderHint, Instance: isaacnetwork.NodeMetricsRequestHeader{}},
 	{Hint: isaacnetwork.OperationRequestHeaderHint, Instance: isaacnetwork.OperationRequestHeader{}},
 	{Hint: isaacnetwork.ProposalRequestHeaderHint, Instance: isaacnetwork.ProposalRequestHeader{}},
 	{Hint: isaacnetwork.RequestProposalRequestHeaderHint, Instance: isaacnetwork.RequestProposalRequestHeader{}},

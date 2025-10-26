@@ -117,11 +117,21 @@ func PMemberlist(pctx context.Context) (context.Context, error) {
 
 func PStartMemberlist(pctx context.Context) (context.Context, error) {
 	var m *quicmemberlist.Memberlist
-	if err := util.LoadFromContextOK(pctx, MemberlistContextKey, &m); err != nil {
+	var collector *isaacnetwork.NetworkMetricsCollector
+
+	if err := util.LoadFromContextOK(pctx,
+		MemberlistContextKey, &m,
+		MetricsCollectorContextKey, &collector,
+	); err != nil {
 		return pctx, err
 	}
 
-	return pctx, m.Start(context.Background())
+	ctx := context.Background()
+	if collector != nil {
+		ctx = quicstream.WithMetricsCollector(ctx, collector)
+	}
+
+	return pctx, m.Start(ctx)
 }
 
 func PCloseMemberlist(pctx context.Context) (context.Context, error) {

@@ -86,6 +86,7 @@ type Memberlist struct {
 	args  *MemberlistArgs
 	*logging.Logging
 	*util.ContextDaemon
+	ctx                context.Context
 	m                  *memberlist.Memberlist
 	delegate           *Delegate
 	members            *membersPool
@@ -99,6 +100,7 @@ type Memberlist struct {
 	joinedLock         sync.RWMutex
 	usermsgsLock       sync.Mutex
 	isJoined           bool
+	metricsCollector   quicstream.MetricsCollector
 }
 
 func NewMemberlist(local Member, args *MemberlistArgs) (*Memberlist, error) {
@@ -136,6 +138,10 @@ func NewMemberlist(local Member, args *MemberlistArgs) (*Memberlist, error) {
 }
 
 func (srv *Memberlist) Start(ctx context.Context) error {
+	srv.ctx = ctx
+	srv.metricsCollector = quicstream.GetMetricsCollector(ctx)
+	srv.updateMemberMetrics()
+
 	m, err := srv.createMemberlist()
 	if err != nil {
 		return err
@@ -226,6 +232,7 @@ func (srv *Memberlist) Leave(timeout time.Duration) error {
 		notleft = true
 
 		srv.members.Empty()
+		srv.updateMemberMetrics()
 
 		if err := srv.m.Leave(timeout); err != nil {
 			srv.Log().Error().Err(err).Msg("failed to leave previous memberlist; ignored")
@@ -305,6 +312,10 @@ func (srv *Memberlist) Broadcast(b memberlist.Broadcast) {
 		b.Finished()
 
 		return
+	}
+
+	if srv.metricsCollector != nil {
+		srv.metricsCollector.RecordMemberlistBroadcast()
 	}
 
 	srv.Log().Trace().Interface("broadcast", b).Msg("enqueue broadcast")
@@ -699,6 +710,8 @@ func (srv *Memberlist) whenJoined(member Member) {
 
 	if srv.members.Set(member) {
 		srv.Log().Debug().Bool("is_joined", srv.isJoined).Interface("member", member).Msg("member joined")
+
+		srv.updateMemberMetrics()
 	}
 }
 
@@ -723,6 +736,8 @@ func (srv *Memberlist) whenLeft(member Member) {
 
 		if removed {
 			srv.Log().Debug().Bool("is_joined", srv.isJoined).Interface("member", member).Msg("member left")
+
+			srv.updateMemberMetrics()
 		}
 
 		return removed
@@ -751,7 +766,19 @@ func (srv *Memberlist) notifyMsgFunc(b []byte) {
 	srv.usermsgsLock.Lock()
 	defer srv.usermsgsLock.Unlock()
 
+	if srv.metricsCollector != nil {
+		srv.metricsCollector.RecordMemberlistMessageReceived()
+	}
+
 	srv.usermsgs.PushBack(b)
+}
+
+func (srv *Memberlist) updateMemberMetrics() {
+	if srv.metricsCollector == nil {
+		return
+	}
+
+	srv.metricsCollector.SetMemberlistMembers(srv.members.Len())
 }
 
 func (srv *Memberlist) notifyMsgCallbackBroadcastMessage(b []byte) ([]byte, encoder.Encoder, error) {

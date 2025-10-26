@@ -102,6 +102,12 @@ func (srv *Server) accept(ctx context.Context, listener *quic.EarlyListener) {
 }
 
 func (srv *Server) handleConnection(ctx context.Context, conn *quic.Conn) {
+	collector := GetMetricsCollector(ctx)
+	if collector != nil {
+		collector.RecordQuicConnectionOpened()
+		defer collector.RecordQuicConnectionClosed()
+	}
+
 	for {
 		stream, err := conn.AcceptStream(ctx)
 		if err != nil {
@@ -158,6 +164,11 @@ func (srv *Server) handleConnection(ctx context.Context, conn *quic.Conn) {
 func (srv *Server) handleStream(ctx context.Context, remoteAddr net.Addr, stream *quic.Stream) {
 	sctx, cancel := srv.streamTimeoutContext(ctx)
 	defer cancel()
+
+	if collector := GetMetricsCollector(ctx); collector != nil {
+		collector.RecordQuicStreamOpened()
+		defer collector.RecordQuicStreamClosed()
+	}
 
 	var errcode quic.StreamErrorCode
 

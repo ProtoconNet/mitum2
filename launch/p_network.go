@@ -100,11 +100,21 @@ func PNetwork(pctx context.Context) (context.Context, error) {
 
 func PStartNetwork(pctx context.Context) (context.Context, error) {
 	var server *quicstream.Server
-	if err := util.LoadFromContextOK(pctx, QuicstreamServerContextKey, &server); err != nil {
+	var collector *isaacnetwork.NetworkMetricsCollector
+
+	if err := util.LoadFromContextOK(pctx,
+		QuicstreamServerContextKey, &server,
+		MetricsCollectorContextKey, &collector,
+	); err != nil {
 		return pctx, err
 	}
 
-	return pctx, server.Start(context.Background())
+	ctx := context.Background()
+	if collector != nil {
+		ctx = quicstream.WithMetricsCollector(ctx, collector)
+	}
+
+	return pctx, server.Start(ctx)
 }
 
 func PCloseNetwork(pctx context.Context) (context.Context, error) {

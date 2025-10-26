@@ -47,32 +47,45 @@ func Dial(
 }
 
 func (c *Connection) Stream(ctx context.Context, f StreamFunc) error {
-	switch stream, err := c.openStream(ctx); {
-	case err != nil:
+	stream, err := c.openStream(ctx)
+	if err != nil {
 		return ErrOpenStream.WithMessage(err, "stream")
-	default:
-		defer func() {
-			stream.CancelRead(0)
-			_ = stream.Close()
-		}()
-
-		return util.AwareContext(ctx, func(ctx context.Context) error {
-			return f(ctx, stream, stream)
-		})
 	}
+
+	if collector := GetMetricsCollector(ctx); collector != nil {
+		collector.RecordQuicStreamOpened()
+		defer collector.RecordQuicStreamClosed()
+	}
+
+	defer func() {
+		stream.CancelRead(0)
+		_ = stream.Close()
+	}()
+
+	return util.AwareContext(ctx, func(ctx context.Context) error {
+		return f(ctx, stream, stream)
+	})
 }
 
 func (c *Connection) OpenStream(ctx context.Context) (io.Reader, io.WriteCloser, func() error, error) {
-	switch stream, err := c.openStream(ctx); {
-	case err != nil:
+	stream, err := c.openStream(ctx)
+	if err != nil {
 		return nil, nil, nil, ErrOpenStream.WithMessage(err, "open stream")
-	default:
-		return stream, stream, func() error {
-			stream.CancelRead(0)
-
-			return errors.Wrap(stream.Close(), "close stream")
-		}, nil
 	}
+
+	if collector := GetMetricsCollector(ctx); collector != nil {
+		collector.RecordQuicStreamOpened()
+	}
+
+	return stream, stream, func() error {
+		if collector := GetMetricsCollector(ctx); collector != nil {
+			collector.RecordQuicStreamClosed()
+		}
+
+		stream.CancelRead(0)
+
+		return errors.Wrap(stream.Close(), "close stream")
+	}, nil
 }
 
 func (c *Connection) Close() error {

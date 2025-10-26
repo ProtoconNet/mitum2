@@ -3,6 +3,7 @@ package isaacnetwork
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/url"
@@ -26,8 +27,8 @@ var ContextKeyNodeChallengedNode = util.ContextKey("node-challenge-node")
 func QuicstreamHandlerOperation(
 	oppool isaac.NewOperationPool,
 	getFromHandoverX func(context.Context, OperationRequestHeader) (
-	enchint string, body []byte, found bool, _ error,
-),
+		enchint string, body []byte, found bool, _ error,
+	),
 ) quicstreamheader.Handler[OperationRequestHeader] {
 	if getFromHandoverX == nil {
 		getFromHandoverX = func(context.Context, OperationRequestHeader) ( //revive:disable-line:modifies-parameter
@@ -291,10 +292,10 @@ func QuicstreamHandlerBlockMap(
 
 func QuicstreamHandlerBlockItem(
 	blockItemf func(
-	base.Height,
-	base.BlockItemType,
-	func(_ io.Reader, found bool, uri url.URL, compressFormat string) error,
-) error,
+		base.Height,
+		base.BlockItemType,
+		func(_ io.Reader, found bool, uri url.URL, compressFormat string) error,
+	) error,
 ) quicstreamheader.Handler[BlockItemRequestHeader] {
 	return func(ctx context.Context, _ net.Addr,
 		broker *quicstreamheader.HandlerBroker, header BlockItemRequestHeader,
@@ -335,9 +336,9 @@ func QuicstreamHandlerBlockItem(
 
 func QuicstreamHandlerBlockItemFiles(
 	blockItemFilesf func(
-	base.Height,
-	func(_ io.Reader, found bool) error,
-) error,
+		base.Height,
+		func(_ io.Reader, found bool) error,
+	) error,
 ) quicstreamheader.Handler[BlockItemFilesRequestHeader] {
 	return func(ctx context.Context, _ net.Addr,
 		broker *quicstreamheader.HandlerBroker, header BlockItemFilesRequestHeader,
@@ -541,7 +542,7 @@ func QuicstreamHandlerNodeInfo(
 		broker *quicstreamheader.HandlerBroker, _ NodeInfoRequestHeader,
 	) (context.Context, error) {
 		e := util.StringError("handle node info")
-
+		fmt.Println("QuicstreamHandlerNodeInfo QuicstreamHandlerNodeInfo")
 		b, err, _ := util.SingleflightDo[[]byte](&sg, HandlerNameNodeInfo.String(), func() ([]byte, error) {
 			return getNodeInfo()
 		})
@@ -551,6 +552,45 @@ func QuicstreamHandlerNodeInfo(
 			return ctx, e.Wrap(err)
 		case len(b) < 1:
 			return ctx, e.Errorf("empty node info")
+		}
+
+		body := bytes.NewBuffer(b)
+		defer body.Reset()
+
+		if err := writeResponseStream(ctx, broker, true, nil, body); err != nil {
+			return ctx, e.Wrap(err)
+		}
+
+		return ctx, nil
+	}
+}
+
+func QuicstreamHandlerNodeMetrics(
+	getMetrics func(interval string) ([]byte, error),
+) quicstreamheader.Handler[NodeMetricsRequestHeader] {
+	var sg singleflight.Group
+
+	return func(ctx context.Context, _ net.Addr,
+		broker *quicstreamheader.HandlerBroker, req NodeMetricsRequestHeader,
+	) (context.Context, error) {
+		e := util.StringError("handle node metrics")
+
+		interval := req.Interval()
+		if interval == "" {
+			interval = "1m" // default
+		}
+
+		sgkey := HandlerNameNodeMetrics.String() + interval
+
+		b, err, _ := util.SingleflightDo[[]byte](&sg, sgkey, func() ([]byte, error) {
+			return getMetrics(interval)
+		})
+
+		switch {
+		case err != nil:
+			return ctx, e.Wrap(err)
+		case len(b) < 1:
+			return ctx, e.Errorf("empty node metrics")
 		}
 
 		body := bytes.NewBuffer(b)
@@ -631,10 +671,10 @@ func QuicstreamHandlerStreamOperations(
 	networkID base.NetworkID,
 	limit uint64,
 	traverse func(
-	_ context.Context,
-	offset []byte,
-	callback func(enchint string, meta isaacdatabase.FrameHeaderPoolOperation, body, offset []byte) (bool, error),
-) error,
+		_ context.Context,
+		offset []byte,
+		callback func(enchint string, meta isaacdatabase.FrameHeaderPoolOperation, body, offset []byte) (bool, error),
+	) error,
 ) quicstreamheader.Handler[StreamOperationsHeader] {
 	return func(ctx context.Context, addr net.Addr,
 		broker *quicstreamheader.HandlerBroker, header StreamOperationsHeader,
