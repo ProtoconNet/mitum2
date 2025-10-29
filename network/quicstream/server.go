@@ -165,6 +165,8 @@ func (srv *Server) handleStream(ctx context.Context, remoteAddr net.Addr, stream
 	sctx, cancel := srv.streamTimeoutContext(ctx)
 	defer cancel()
 
+	r, w := wrapMetricsIO(ctx, stream, stream)
+
 	if collector := GetMetricsCollector(ctx); collector != nil {
 		collector.RecordQuicStreamOpened()
 		defer collector.RecordQuicStreamClosed()
@@ -173,7 +175,7 @@ func (srv *Server) handleStream(ctx context.Context, remoteAddr net.Addr, stream
 	var errcode quic.StreamErrorCode
 
 	if err := util.AwareContext(sctx, func(context.Context) error {
-		_, err := srv.handler(sctx, remoteAddr, stream, stream)
+		_, err := srv.handler(sctx, remoteAddr, r, w)
 
 		return err
 	}); err != nil {

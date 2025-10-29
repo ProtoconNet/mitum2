@@ -3,7 +3,6 @@ package isaacnetwork
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"net"
 	"net/url"
@@ -542,7 +541,7 @@ func QuicstreamHandlerNodeInfo(
 		broker *quicstreamheader.HandlerBroker, _ NodeInfoRequestHeader,
 	) (context.Context, error) {
 		e := util.StringError("handle node info")
-		fmt.Println("QuicstreamHandlerNodeInfo QuicstreamHandlerNodeInfo")
+
 		b, err, _ := util.SingleflightDo[[]byte](&sg, HandlerNameNodeInfo.String(), func() ([]byte, error) {
 			return getNodeInfo()
 		})

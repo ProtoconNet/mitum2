@@ -2,6 +2,7 @@ package isaacnetwork
 
 import (
 	"math"
+	"reflect"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/ProtoconNet/mitum2/network/quicstream"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
+	"github.com/ProtoconNet/mitum2/util/localtime"
 )
 
 var NodeMetricsHint = hint.MustNewHint("node-metrics-v0.0.1")
@@ -30,20 +32,62 @@ type NodeMetrics struct {
 
 func (m NodeMetrics) MarshalJSON() ([]byte, error) {
 	type alias struct {
-		Hint       hint.Type                  `json:"hint"`
-		Timestamp  time.Time                  `json:"timestamp"`
-		Uptime     string                     `json:"uptime"`
+		hint.BaseHinter
+		Timestamp  localtime.Time             `json:"timestamp"`
+		Uptime     util.ReadableDuration      `json:"uptime"`
 		Cumulative CumulativeMetrics          `json:"cumulative"`
 		Intervals  map[string]IntervalMetrics `json:"intervals"`
 	}
 
 	return util.MarshalJSON(alias{
-		Hint:       m.Hint().Type(),
-		Timestamp:  m.Timestamp,
-		Uptime:     m.Uptime.String(),
+		BaseHinter: m.BaseHinter,
+		Timestamp:  localtime.New(m.Timestamp),
+		Uptime:     util.ReadableDuration(m.Uptime),
 		Cumulative: m.Cumulative,
 		Intervals:  m.Intervals,
 	})
+}
+
+func (m *NodeMetrics) UnmarshalJSON(b []byte) error {
+	e := util.StringError("unmarshal NodeMetrics")
+
+	type alias struct {
+		hint.BaseHinter
+		Timestamp  time.Time                  `json:"timestamp"`
+		Uptime     *util.ReadableDuration     `json:"uptime"`
+		Cumulative CumulativeMetrics          `json:"cumulative"`
+		Intervals  map[string]IntervalMetrics `json:"intervals"`
+	}
+
+	var u alias
+
+	if err := util.UnmarshalJSON(b, &u); err != nil {
+		return e.Wrap(err)
+	}
+
+	m.BaseHinter = u.BaseHinter
+	m.Timestamp = u.Timestamp
+	m.Cumulative = u.Cumulative
+	m.Intervals = u.Intervals
+
+	durArgs := [][2]interface{}{
+		{u.Uptime, &m.Uptime},
+	}
+
+	for i := range durArgs {
+		v := durArgs[i][0].(*util.ReadableDuration) //nolint:forcetypeassert //...
+		t := durArgs[i][1].(*time.Duration)         //nolint:forcetypeassert //...
+
+		if reflect.ValueOf(v).IsZero() {
+			continue
+		}
+
+		if err := util.SetInterfaceValue(time.Duration(*v), t); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type CumulativeMetrics struct {

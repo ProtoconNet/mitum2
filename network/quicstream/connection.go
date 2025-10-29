@@ -57,13 +57,15 @@ func (c *Connection) Stream(ctx context.Context, f StreamFunc) error {
 		defer collector.RecordQuicStreamClosed()
 	}
 
+	r, w := wrapMetricsIO(ctx, stream, stream)
+
 	defer func() {
 		stream.CancelRead(0)
 		_ = stream.Close()
 	}()
 
 	return util.AwareContext(ctx, func(ctx context.Context) error {
-		return f(ctx, stream, stream)
+		return f(ctx, r, w)
 	})
 }
 
@@ -77,7 +79,9 @@ func (c *Connection) OpenStream(ctx context.Context) (io.Reader, io.WriteCloser,
 		collector.RecordQuicStreamOpened()
 	}
 
-	return stream, stream, func() error {
+	r, w := wrapMetricsIO(ctx, stream, stream)
+
+	return r, w, func() error {
 		if collector := GetMetricsCollector(ctx); collector != nil {
 			collector.RecordQuicStreamClosed()
 		}

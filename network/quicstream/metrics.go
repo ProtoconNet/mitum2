@@ -2,6 +2,7 @@ package quicstream
 
 import (
 	"context"
+	"io"
 
 	"github.com/ProtoconNet/mitum2/util"
 )
@@ -46,4 +47,48 @@ func GetMetricsCollector(ctx context.Context) MetricsCollector {
 	}
 
 	return nil
+}
+
+func wrapMetricsIO(ctx context.Context, reader io.Reader, writer io.WriteCloser) (io.Reader, io.WriteCloser) {
+	collector := GetMetricsCollector(ctx)
+
+	switch {
+	case collector == nil:
+		return reader, writer
+	case reader == nil:
+		return reader, &metricsWriteCloser{WriteCloser: writer, collector: collector}
+	case writer == nil:
+		return &metricsReader{reader: reader, collector: collector}, writer
+	default:
+		return &metricsReader{reader: reader, collector: collector},
+			&metricsWriteCloser{WriteCloser: writer, collector: collector}
+	}
+}
+
+type metricsReader struct {
+	reader    io.Reader
+	collector MetricsCollector
+}
+
+func (r *metricsReader) Read(p []byte) (int, error) {
+	n, err := r.reader.Read(p)
+	if n > 0 && r.collector != nil {
+		r.collector.RecordQuicBytesReceived(uint64(n))
+	}
+
+	return n, err
+}
+
+type metricsWriteCloser struct {
+	io.WriteCloser
+	collector MetricsCollector
+}
+
+func (w *metricsWriteCloser) Write(p []byte) (int, error) {
+	n, err := w.WriteCloser.Write(p)
+	if n > 0 && w.collector != nil {
+		w.collector.RecordQuicBytesSent(uint64(n))
+	}
+
+	return n, err
 }
