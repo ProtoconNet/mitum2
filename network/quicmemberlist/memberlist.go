@@ -323,6 +323,22 @@ func (srv *Memberlist) Broadcast(b memberlist.Broadcast) {
 	srv.delegate.QueueBroadcast(b)
 }
 
+func (srv *Memberlist) Broadcast2(b memberlist.Broadcast) {
+	if !srv.CanBroadcast() {
+		b.Finished()
+
+		return
+	}
+
+	if srv.metricsCollector != nil {
+		srv.metricsCollector.RecordMemberlistBroadcast()
+	}
+
+	srv.Log().Trace().Interface("broadcast", b).Msg("enqueue broadcast")
+
+	srv.delegate.QueueBroadcast2(b)
+}
+
 func (srv *Memberlist) CallbackBroadcast(b []byte, id string, notifych chan struct{}) error {
 	if !srv.CanBroadcast() {
 		if notifych != nil {
@@ -347,6 +363,35 @@ func (srv *Memberlist) CallbackBroadcast(b []byte, id string, notifych chan stru
 		_, _ = buf.Write(i)
 
 		srv.Broadcast(NewBroadcast(buf.Bytes(), id, notifych))
+	}
+
+	return nil
+}
+
+func (srv *Memberlist) CallbackBroadcast2(b []byte, id string, notifych chan struct{}) error {
+	if !srv.CanBroadcast() {
+		if notifych != nil {
+			close(notifych)
+		}
+
+		return nil
+	}
+
+	// NOTE save b in cache first
+	srv.cbcache.Set(id, b, srv.args.CallbackBroadcastMessageExpire)
+
+	switch i, err := srv.args.Encoder.Marshal(
+		NewConnInfoBroadcastMessage(id, srv.local.ConnInfo())); {
+	case err != nil:
+		return err
+	default:
+		buf := bytes.NewBuffer(nil)
+		defer buf.Reset()
+
+		_, _ = buf.Write(callbackBroadcastMessageHeaderPrefix)
+		_, _ = buf.Write(i)
+
+		srv.Broadcast2(NewBroadcast(buf.Bytes(), id, notifych))
 	}
 
 	return nil

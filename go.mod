@@ -91,4 +91,4 @@ require (
 	golang.org/x/tools v0.36.0 // indirect
 )
 
-replace github.com/hashicorp/memberlist => github.com/spikeekips/memberlist v0.0.0-20230626195851-39f17fa10d23 // latest fix-data-race branch
+replace github.com/hashicorp/memberlist => github.com/HayoungOh5/memberlist v0.0.0-20251120091718-913bc68ce0d2

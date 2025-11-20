@@ -68,6 +68,10 @@ func (d *Delegate) QueueBroadcast(b memberlist.Broadcast) {
 	d.qu.QueueBroadcast(b)
 }
 
+func (d *Delegate) QueueBroadcast2(b memberlist.Broadcast) {
+	d.qu.QueueBroadcast2(b)
+}
+
 func (d *Delegate) GetBroadcasts(overhead, limit int) [][]byte {
 	d.qu.RetransmitMult = d.reTransmitMult()
 	return d.qu.GetBroadcasts(overhead, limit)

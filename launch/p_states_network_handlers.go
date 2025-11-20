@@ -165,7 +165,7 @@ func AttachHandlerSendOperation(pctx context.Context) error {
 					}
 				}
 
-				return memberlist.CallbackBroadcast(b, id, nil)
+				return memberlist.CallbackBroadcast2(b, id, nil)
 			},
 			params.MISC.MaxMessageSize,
 		),
